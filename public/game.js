@@ -26,6 +26,8 @@ function onresize(event) {
 }
 
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
+map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
+map_texture.repeat.set(10, 10);
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000),
           new THREE.MeshBasicMaterial({ map: map_texture }), 0);
 scene.add(map);
@@ -61,5 +63,13 @@ function Controls(camera) {
   });
 
   this.update = function(delta){
+    if (up && !down)
+      camera.position.z = THREE.Math.clamp(camera.position.z - 10, 0, 600);
+    if (!up && down)
+      camera.position.z = THREE.Math.clamp(camera.position.z + 10, 0, 600);
+    if (left && !right)
+      camera.position.x = THREE.Math.clamp(camera.position.x - 10, -200, 200);
+    if (!left && right)
+      camera.position.x = THREE.Math.clamp(camera.position.x + 10, -200, 200);
   }
 }
