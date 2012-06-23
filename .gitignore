@@ -1,0 +1,12 @@
+.sass-cache
+.DS_Store
+*.py[co]
+*.sw[po]
+*.log
+*.pid
+*.db
+:*
+
+logs
+media
+static
