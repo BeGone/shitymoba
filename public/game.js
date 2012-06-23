@@ -10,6 +10,7 @@ var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 container.appendChild(renderer.domElement);
 var clock = new THREE.Clock();
+var projector = new THREE.Projector();
 var controls = new Controls(camera);
 var stats = new Stats();
 stats.domElement.style.position = 'absolute';
@@ -25,6 +26,13 @@ function onresize(event) {
   camera.updateProjectionMatrix();
 }
 
+document.addEventListener('click', function(event) {
+  var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
+  projector.unprojectVector(vector, camera);
+  var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
+  console.log(ray.intersectObjects([map]));
+});
+
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
 map_texture.repeat.set(10, 10);
@@ -32,8 +40,8 @@ var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000),
           new THREE.MeshBasicMaterial({ map: map_texture }), 0);
 scene.add(map);
 requestAnimationFrame(render);
-function render() {
 
+function render() {
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
   controls.update(clock.getDelta());
