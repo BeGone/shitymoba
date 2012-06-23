@@ -1,7 +1,9 @@
+var cache = {};
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
 var container = document.getElementById('container');
 var scene = new Physijs.Scene();
+scene.setGravity(new THREE.Vector3(0, 0, 0));
 var camera = new THREE.PerspectiveCamera(40, width / height, 1, 100000);
 camera.position.set(0, 500, 0);
 camera.rotation.x = -Math.PI/3;
@@ -26,11 +28,19 @@ function onresize(event) {
   camera.updateProjectionMatrix();
 }
 
+//var currentClickVector;
+//var currentWaypointLoc;
+
+var setNewWaypoint = function (clickPosition) {
+  currentClickVector = new Three.Vector3(clickPosition.x - me.position.x, clickPosition.y - me.position.y, clickPosition.z - me.position.z);
+  currentWaypoint = clickPosition;
+}
+
 document.addEventListener('click', function(event) {
   var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
   projector.unprojectVector(vector, camera);
   var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
-  console.log(ray.intersectObjects([map]));
+  me.destination = ray.intersectObject(map)[0].point;
 });
 
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
@@ -39,8 +49,12 @@ map_texture.repeat.set(10, 10);
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000),
           new THREE.MeshBasicMaterial({ map: map_texture }), 0);
 scene.add(map);
-requestAnimationFrame(render);
 
+var me = new Physijs.CylinderMesh(new THREE.CylinderGeometry(10, 10, 50));
+me.position.set(0, 26, -200);
+scene.add(me);
+
+requestAnimationFrame(render);
 function render() {
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
@@ -79,5 +93,11 @@ function Controls(camera) {
       camera.position.x = THREE.Math.clamp(camera.position.x - 10, -200, 200);
     if (!left && right)
       camera.position.x = THREE.Math.clamp(camera.position.x + 10, -200, 200);
+
+    if (me && me.destination) {
+      var vector = me.position.subSelf(me.destination).normalize().negate().multiplyScalar(100);
+      vector.y = 0;
+      me.setLinearVelocity(vector);
+    }
   }
 }
