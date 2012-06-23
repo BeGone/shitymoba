@@ -9,6 +9,8 @@ scene.add(camera);
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize(width, height);
 container.appendChild(renderer.domElement);
+var clock = new THREE.Clock();
+var controls = new Controls(camera);
 var stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
@@ -27,12 +29,37 @@ var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000),
           new THREE.MeshBasicMaterial({ map: map_texture }), 0);
 scene.add(map);
-
 requestAnimationFrame(render);
 function render() {
+
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
-  //controls.update(clock.getDelta());
+  controls.update(clock.getDelta());
   stats.update();
   requestAnimationFrame(render);
+}
+
+function Controls(camera) {
+  this.camera = camera;
+  var up, down, left, right;
+
+  document.addEventListener('keydown', function(event) {
+    switch(event.keyCode) {
+      case 38: /*up*/ up = true; break;
+      case 37: /*left*/ left = true; break;
+      case 40: /*down*/ down = true; break;
+      case 39: /*right*/ right = true; break;
+    }
+  });
+  document.addEventListener('keyup', function(event) {
+    switch(event.keyCode) {
+      case 38: /*up*/ up = false; break;
+      case 37: /*left*/ left = false; break;
+      case 40: /*down*/ down = false; break;
+      case 39: /*right*/ right = false; break;
+    }
+  });
+
+  this.update = function(delta){
+  }
 }
