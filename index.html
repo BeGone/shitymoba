@@ -4,11 +4,19 @@
     <title> Shity Moba </title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/style.css">
+    <script src="/underscore.min.js"></script>
+    <script src="/THREE-49dev.min.js"></script>
+    <script src="/Stats.js"></script>
+    <script src="/physi.js"></script>
+    <script>
+      Physijs.scripts.ammo = '/ammo.js';
+      Physijs.scripts.worker = '/physijs_worker.js';
+    </script>
   </head>
   <body>
-
-      text
-
+    <div id='container'>
+    </div>
+    <script src="/game.js"></script>
   </body>
 </html>
