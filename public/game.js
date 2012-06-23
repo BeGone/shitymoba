@@ -1,9 +1,10 @@
 var cache = {};
+var zeroV = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
 var container = document.getElementById('container');
 var scene = new Physijs.Scene();
-scene.setGravity(new THREE.Vector3(0, 0, 0));
+scene.setGravity(zeroV);
 var camera = new THREE.PerspectiveCamera(40, width / height, 1, 100000);
 camera.position.set(0, 500, 0);
 camera.rotation.x = -Math.PI/3;
@@ -28,14 +29,6 @@ function onresize(event) {
   camera.updateProjectionMatrix();
 }
 
-//var currentClickVector;
-//var currentWaypointLoc;
-
-var setNewWaypoint = function (clickPosition) {
-  currentClickVector = new Three.Vector3(clickPosition.x - me.position.x, clickPosition.y - me.position.y, clickPosition.z - me.position.z);
-  currentWaypoint = clickPosition;
-}
-
 document.addEventListener('click', function(event) {
   var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
   projector.unprojectVector(vector, camera);
@@ -46,13 +39,19 @@ document.addEventListener('click', function(event) {
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
 map_texture.repeat.set(10, 10);
-var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000),
-          new THREE.MeshBasicMaterial({ map: map_texture }), 0);
+map_material = new THREE.MeshBasicMaterial({ map: map_texture });
+var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000), map_material,  0);
 scene.add(map);
 
 var me = new Physijs.CylinderMesh(new THREE.CylinderGeometry(10, 10, 50));
 me.position.set(0, 26, -200);
 scene.add(me);
+
+
+var box = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 20, 20));
+box.position.set(0, 10, -250);
+box.mass = 0;
+scene.add(box);
 
 requestAnimationFrame(render);
 function render() {
@@ -98,6 +97,8 @@ function Controls(camera) {
       var vector = me.position.subSelf(me.destination).normalize().negate().multiplyScalar(100);
       vector.y = 0;
       me.setLinearVelocity(vector);
+      me.setAngularVelocity(zeroV);
+      me.setAngularFactor(zeroV);
     }
   }
 }
