@@ -371,23 +371,26 @@ function onresize(event) {
 
 function mousedown(event) {
   event.preventDefault();
-  if (event.which == 3) { // right click
-    var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
-    projector.unprojectVector(vector, camera);
-    var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
-    var intersections = ray.intersectObject(map);
-      //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
-  //follow; 4. empty: go
-
+  var vector = new THREE.Vector3((cache['hand'][1]/ width) * 2 - 1, -(cache['hand'][0]/ height) * 2 + 1, 1);
+  projector.unprojectVector(vector, camera);
+  var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
+  var intersections = ray.intersectObject(map);
+  if (event.which == 1) { // left click
     if (intersections[0])
-      me.destination = ray.intersectObject(map)[0].point;
+      console.log(intersections)[0].point;
+
+  } else if (event.which == 3) { // right click
+    //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
+    //follow; 4. empty: go
+    if (intersections[0])
+      me.destination = intersections[0].point;
 
     var endNode = findClosestNode(me.destination);
     var startNode = findClosestNode(me.position);
     var newPath = dijkstra.find_path(graph, startNode, endNode);
     //console.log(newPath);
     directionsQueue = new Queue();
-    if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])) {
+    if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])){
       directionsQueue.enqueue(me.destination);
     } else {
       for (item in newPath) {
@@ -436,6 +439,13 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   cache['minion'].scale.set(.2, .2, .2);
   minion_ready = true;
 });
+
+loader.load('tree.js', function (geometry) {
+  var material = geometry.materials[0];
+  cache['tree'] = new THREE.Mesh(geometry, material);
+  console.log('tree!!!', material);
+});
+
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
@@ -530,7 +540,6 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
 function spawn_minions() {
   spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
   spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
-  requestAnimationFrame(render);
 }
 
 setInterval(function() {spawn_minions();}, 5000);
@@ -598,10 +607,12 @@ function Controls(camera) {
       x -= speed;
     if (cache['hand'][1] > width - 15)
       x += speed;
+
+
     if (x)
-      camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH + 200, MAP_WIDTH - 200);
+      camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH/2.8, MAP_WIDTH/2.8);
     if (z)
-      camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT + 550, MAP_HEIGHT);
+      camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT/4.0, MAP_HEIGHT/1.9);
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {
