@@ -7,6 +7,9 @@ var zeroVector = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
 cache['mouse'] = [width/2, height/2];
+cache['hand'] = [width/2, height/2];
+var tip = document.getElementById('tip');
+var hand = document.getElementById('hand');
 var container = document.getElementById('container');
 var scene = new Physijs.Scene();
 scene.setGravity(zeroVector);
@@ -317,7 +320,6 @@ graph = {
 };
 
 var path = dijkstra.find_path(graph, 'topLeftL', 'topRightR');
-console.log(path);
 /*
 if (path.join() !== ['topLeftL', 'topLeftT', 'topRightR', 'topRightT', 'bottomLeftL', 'bottomLeftB', 'bottomRightB', 'bottomRightR', 'innerRight', 'innerTop', 'innerLeft', 'innerBottom'].join()) {
   throw new Error('Path finding error!');
@@ -326,9 +328,32 @@ if (path.join() !== ['topLeftL', 'topLeftT', 'topRightR', 'topRightT', 'bottomLe
 
 var directionsQueue = new Queue();
 
-window.addEventListener('resize', onresize, false);
-document.addEventListener('click', onclick, false);
-document.addEventListener('mousemove', function (e) { cache['mouse'] = [e.offsetX, e.offsetY] });
+
+function lockPointer() {
+  navigator.pointer.lock(document.body, function() {
+    tip.style.display = "none";
+    hand.style.display = "block";
+    hand.style.top = cache['hand'][0] + 'px';
+    hand.style.left = cache['hand'][1] + 'px';
+  });
+}
+
+
+window.oncontextmenu = function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+};
+window.addEventListener('resize', onresize);
+//document.addEventListener('click', onclick);
+document.addEventListener('mousedown', mousedown);
+document.getElementById('activate').addEventListener('click', function(event) {
+  if (document.webkitIsFullScreen)
+    lockPointer();
+  else
+    container.webkitRequestFullScreen(container.ALLOW_KEYBOARD_INPUT);
+
+}, false);
 
 function onresize(event) {
   width = window.innerWidth;
@@ -338,26 +363,29 @@ function onresize(event) {
   camera.updateProjectionMatrix();
 }
 
-function onclick(event) {
-  var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
-  projector.unprojectVector(vector, camera);
-  var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
-  var intersections = ray.intersectObject(map);
-  if (intersections[0])
-    me.destination = ray.intersectObject(map)[0].point;
+function mousedown(event) {
+  event.preventDefault();
+  if (event.which == 3) { // right click
+    var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
+    projector.unprojectVector(vector, camera);
+    var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
+    var intersections = ray.intersectObject(map);
+    if (intersections[0])
+      me.destination = ray.intersectObject(map)[0].point;
 
-  var endNode = findClosestNode(me.destination);
-  var startNode = findClosestNode(me.position);
-  var newPath = dijkstra.find_path(graph, startNode, endNode);
-  console.log(newPath);
-  directionsQueue = new Queue();
-  if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])) {
-    directionsQueue.enqueue(me.destination);
-  } else {
-    for (item in newPath) {
-      directionsQueue.enqueue(nodes[newPath[item]]);
+    var endNode = findClosestNode(me.destination);
+    var startNode = findClosestNode(me.position);
+    var newPath = dijkstra.find_path(graph, startNode, endNode);
+    //console.log(newPath);
+    directionsQueue = new Queue();
+    if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])) {
+      directionsQueue.enqueue(me.destination);
+    } else {
+      for (item in newPath) {
+        directionsQueue.enqueue(nodes[newPath[item]]);
+      }
+      directionsQueue.enqueue(me.destination);
     }
-    directionsQueue.enqueue(me.destination);
   }
 };
 
@@ -367,8 +395,6 @@ map_texture.repeat.set(100, 100);
 map_material = new THREE.MeshBasicMaterial({ map: map_texture });
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material,  0);
 scene.add(map);
-
-requestAnimationFrame(render);
 
 
 var loader = new THREE.JSONLoader();
@@ -427,8 +453,9 @@ function init() {
     addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
   }
 
-
-  requestAnimationFrame(render);
+  setInterval(function(){
+    requestAnimationFrame(render);
+  }, 1000/60);
 }
 
 function render() {
@@ -436,14 +463,38 @@ function render() {
   renderer.render(scene, camera);
   controls.update(clock.getDelta());
   stats.update();
-  requestAnimationFrame(render);
 }
 
 function Controls(camera) {
   this.camera = camera;
-  var up, down, left, right, x, z;
+  var up, down, left, right, x, z, pointerX, pointerY;
   var speed = 10;
 
+  navigator.pointer = navigator.pointer || navigator.webkitPointer;
+  function onfullscreen(event) {
+    if (document.webkitIsFullScreen)
+      lockPointer();
+    else
+      tip.style.display = "block";
+    hand.style.display = "none";
+  }
+  function onlocklost(event) { tip.style.display = "block"; hand.style.display = "none"; }
+  function onmousemove(event) {
+    if (navigator.pointer.isLocked) {
+      pointerX = event.movementX || event.webkitMovementX;
+      pointerY = event.movementY || event.webkitMovementY;
+      cache['hand'] = [
+        THREE.Math.clamp(cache['hand'][0] + pointerY, 10, height - 20),
+        THREE.Math.clamp(cache['hand'][1] + pointerX, 10, width - 20)
+      ]
+      hand.style.top = cache['hand'][0] + 'px';
+      hand.style.left = cache['hand'][1] + 'px';
+    }
+  };
+
+  document.addEventListener('webkitfullscreenchange', onfullscreen);
+  document.addEventListener('webkitpointerlocklost', onlocklost);
+  document.addEventListener('mousemove', onmousemove);
   document.addEventListener('keydown', function(event) {
     switch(event.keyCode) {
       case 38: /*up*/ up = true; break;
@@ -462,6 +513,7 @@ function Controls(camera) {
   });
 
   this.update = function(delta){
+/*
     if (up && !down || cache['mouse'][1] < 30)
       z -= speed;
     if (!up && down || cache['mouse'][1] > height - 30)
@@ -470,11 +522,11 @@ function Controls(camera) {
       x -= speed;
     if (!left && right || cache['mouse'][0] > width - 30)
       x += speed;
-
     if (x)
       camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH + 200, MAP_WIDTH - 200);
     if (z)
       camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT + 550, MAP_HEIGHT);
+*/
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {

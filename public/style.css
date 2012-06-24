@@ -1,5 +1,18 @@
 body {
   margin: 0px;
   padding: 0px;
+} #hand {
+  display: none;
+  position: absolute;
+} #tip {
+  top: 30%;
+  left: 30%;
+  z-index: 1000;
+  padding: 10px;
+  position: absolute;
+  border: 2px solid gray;
+  background-color: white;
+} #activate {
+  font-size: 30px;
+  padding: 5px 10px;
 }
-
