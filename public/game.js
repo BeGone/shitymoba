@@ -53,6 +53,7 @@ function onclick(event) {
 		if (solutionPts.length == 0) {
 			movementQueue.push(endPt);
 		} else {
+			console.log(solutionPts);
 			for (var i = 0; i < solutionPts.length; i++) {
 				console.log("detour");
 				movementQueue.push(new THREE.Vector3(solutionPts[i].x, 0, solutionPts[i].y));

@@ -29,7 +29,7 @@ var lineIntersects = function(a1, a2, b1, b2) {
         var ua = ua_t / u_b;
         var ub = ub_t / u_b;
 
-        if ( 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1 ) {
+        if ( 0 < ua && ua < 1 && 0 < ub && ub < 1 ) {
             return true;
         } else {
             return false;
@@ -60,97 +60,76 @@ var calcDist = function (x1, y1, x2, y2) {
 	return Math.sqrt(x2*x2+y2*y2); 
 }
 
-var swapPoints = function (pt1, pt2) {
-	var tx, ty;
-	tx = pt1.x;
-	ty = pt1.y;
-	pt1.x = pt2.x;
-	pt1.y = pt2.y;
-	pt2.x = tx;
-	pt2.y = ty;
-}
-
 //  Finds the shortest path from x1,y1 to x2,y2 that stays within the polygon set.
 
 var shortestPath = function(pt1, pt2, polySet, solutionCallback) {
-	var INF = 9999999;
+	var nodes = []
+	var openList = [];
+	var closedList = [];
 	
-	var pointList = [];
+	console.log(polySet);
 	
-	var treeCount, polyI, i, j, bestI, bestJ;
-	var bestDist, newDist;
-	
-	var solutionPoints = [];
-	
-	if ( pointInPolygonSet(pt2, polySet) )
-	{
+	if ( pointInPolygonSet(pt2, polySet) ) {
 		console.log("point in polygon set");
 		return false;
 	}
 	
 	if (!lineInPolygonSet(pt1, pt2, polySet)) {
 		console.log("I don't see any obstructions");
-		solutionCallback(solutionPoints);
+		solutionCallback(closedList);
 		return true;
 	}
 	
-	pointList.push(pt1);
-	
 	for (polyI = 0; polyI < polySet.poly.length; polyI++) {
 		for (i = 0; i < polySet.poly[polyI].pts.length; i++) {
-			pointList.push(polySet.poly[polyI].pts[i]);
+			polySet.poly[polyI].pts[i].list = "wild";
+			nodes.push(polySet.poly[polyI].pts[i]);
 		}
 	}
-	pointList.push(pt2);
-
-	//  Initialize the shortest-path tree to include just the startpoint.
-	treeCount = 1; 
-	pointList[0].totalDist = 0;
-
-	//  Iteratively grow the shortest-path tree until it reaches the endpoint
-	//  -- or until it becomes unable to grow, in which case exit with failure.
-	bestJ = 0;
-	while (bestJ < pointList.length - 1) {
-		bestDist = INF;
-		for (i = 0; i < treeCount; i++) {
-			for (j = treeCount; j < pointList.length; j++) {
-				if (!lineInPolygonSet(pointList[i], pointList[j], polySet)) {
-					newDist = pointList[i].totalDist + calcDist(pointList[i].x, pointList[i].y, pointList[j].x, pointList[j].y);
-					if (newDist < bestDist) {
-						bestDist = newDist;
-						bestI=i;
-						bestJ=j; 
+	pt2.list = "wild";
+	nodes.push(pt2);
+	
+	pt1.list = "open";
+	pt1.g = 0;
+	pt1.h = calcDist(pt1.x, pt1.y, pt2.x, pt2.y);
+	openList.push(pt1);
+	
+	while ( openList.length > 0 ) {
+		var currNode = {};
+		currNode.g = 99999;
+		currNode.h = 99999;
+		for (i = 0; i < openList.length; i++) {
+			if ((openList[i].g + openList[i].h) < (currNode.g + currNode.h)) {
+				currNode = openList[i];
+			}
+		}
+		currNode.list = "closed";
+		var index = openList.indexOf(currNode);
+		openList.splice(index, 1);
+		closedList.push(currNode);
+		
+		if (currNode == pt2) {
+			console.log("target " + pt2.x + ", " + pt2.y + " reached");
+			break;
+		}
+		
+		for (i = 0; i < nodes.length; i++) {
+			if (nodes[i].list != "closed") {
+				if (!lineInPolygonSet(currNode, nodes[i], polySet)) {
+					if (nodes[i].list != "open") {
+						nodes[i].list = "open";
+						openList.push(nodes[i]);
 					}
+					nodes[i].g = calcDist(currNode.x, currNode.y, nodes[i].x, nodes[i].y);
+					nodes[i].h = calcDist(nodes[i].x, nodes[i].y, pt2.x, pt2.y);
 				}
 			}
 		}
-		if (bestDist == INF)
-		{
-			console.log("no solution?!");
-			return false;   //  (no solution)
-		}
-		pointList[bestJ].prev = bestI;
-		pointList[bestJ].totalDist = bestDist;
-		swapPoints(pointList[bestJ], pointList[treeCount]);
-		treeCount++; 
 	}
-
-	//  Load the solution arrays.
-	var solutionNodes = -1;
-	i = treeCount - 1;
-	while (i > 0) {
-		i = pointList[i].prev;
-		solutionNodes++; 
-	}
-	j = solutionNodes - 1;
-	i = treeCount - 1;
-	while (j >= 0) {
-		i = pointList[i].prev;
-		solutionPoints.push(pointList[i]);
-		j--; 
-	}
-
+	
+	console.log("loop terminate");
+	
 	//  Success.
-	solutionCallback(solutionPoints);
+	solutionCallback(closedList);
 	return true; 
 }
