@@ -1,6 +1,6 @@
 var MAP_WIDTH = 10000;
 var MAP_HEIGHT = 10000;
-var WALL_HEIGHT = 200;
+var WALL_HEIGHT = 
 
 var cache = {};
 var zeroV = new THREE.Vector3(0, 0, 0);
