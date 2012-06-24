@@ -371,35 +371,57 @@ function onresize(event) {
 
 function mousedown(event) {
   event.preventDefault();
-  var vector = new THREE.Vector3((cache['hand'][1]/ width) * 2 - 1, -(cache['hand'][0]/ height) * 2 + 1, 1);
-  projector.unprojectVector(vector, camera);
-  var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
-  var intersections = ray.intersectObject(map);
-  if (event.which == 1) { // left click
-    if (intersections[0])
-      console.log(intersections)[0].point;
+  if (navigator.pointer.isLocked) {
+    var vector = new THREE.Vector3((cache['hand'][1]/ width) * 2 - 1, -(cache['hand'][0]/ height) * 2 + 1, 1);
+    projector.unprojectVector(vector, camera);
+    var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
+    var intersections = ray.intersectObject(map);
+    if (event.which == 1) { // left click
+      if (intersections[0])
+        attack('q', me, intersections[0].point);
+    } else if (event.which == 3) { // right click
+      //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
+      //follow; 4. empty: go
+      if (intersections[0])
+        me.destination = intersections[0].point;
 
-  } else if (event.which == 3) { // right click
-    //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
-    //follow; 4. empty: go
-    if (intersections[0])
-      me.destination = intersections[0].point;
-
-    var endNode = findClosestNode(me.destination);
-    var startNode = findClosestNode(me.position);
-    var newPath = dijkstra.find_path(graph, startNode, endNode);
-    //console.log(newPath);
-    directionsQueue = new Queue();
-    if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])){
-      directionsQueue.enqueue(me.destination);
-    } else {
-      for (item in newPath) {
-        directionsQueue.enqueue(nodes[newPath[item]]);
+      var endNode = findClosestNode(me.destination);
+      var startNode = findClosestNode(me.position);
+      var newPath = dijkstra.find_path(graph, startNode, endNode);
+      //console.log(newPath);
+      directionsQueue = new Queue();
+      if (distanceFrom(me.position, me.destination) < distanceFrom(me.position, nodes[startNode])){
+        directionsQueue.enqueue(me.destination);
+      } else {
+        for (item in newPath) {
+          directionsQueue.enqueue(nodes[newPath[item]]);
+        }
+        directionsQueue.enqueue(me.destination);
       }
-      directionsQueue.enqueue(me.destination);
     }
   }
 };
+
+function attack(letter, model, vector) {
+  switch(letter) {
+    case 'q':
+      if (!model.q.visible) {
+        model.q.scale.set(1, 1, 1);
+        clearTimeout(model.timer);
+        model.q.visible = true;
+        model.q.position = vector;
+        setTimeout(function() {
+          model.timer = setInterval(function() {
+            if (model.q.scale.x < 5)
+              model.q.scale.multiplyScalar(1.1);
+            else
+              model.q.visible = false;
+          }, 1000/60);
+        }, 1000);
+      }
+      break;
+  }
+}
 
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
@@ -423,7 +445,7 @@ loader.load('karthus.js', function (geometry) {
     damage: 20,
     isChamp: true,
     isAlive: true,
-    isTeamA:    true // TODO there should be ways for champions to know whether they are team a or team be from the server
+    isTeamA: true // TODO there should be ways for champions to know whether they are team a or team be from the server
   }
   element[ID] = champion;
   init();
@@ -440,12 +462,13 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   minion_ready = true;
 });
 
+/*
 loader.load('tree.js', function (geometry) {
   var material = geometry.materials[0];
   cache['tree'] = new THREE.Mesh(geometry, material);
   console.log('tree!!!', material);
 });
-
+*/
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
@@ -460,6 +483,7 @@ getDistance = function(x1, z1, x2, z2) {
 addWall = function(x1, z1, x2, z2) {
   var wall_geometry = new THREE.PlaneGeometry(getDistance(x1, z1, x2, z2), WALL_HEIGHT);
   var wall_mesh = new Physijs.BoxMesh(wall_geometry, wall_material, 0);
+  wall_mesh.doubleSided = true;
   wall_mesh.name = 'wall';
   wall_mesh.position.set((x1 + x2) / 2, 0, (z1 + z2) / 2);
   wall_mesh.rotation.z = Math.atan((z2 - z1) / (x2 - x1));
@@ -486,6 +510,10 @@ for (var i = 0; i < wall_coords.length; ++i) {
 
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
+  me.q = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshBasicMaterial({ color: 0xA52A2A }));
+  me.q.visible = false;
+  me.q.position.set(0, Math.pow(10, 9), 0);
+  scene.add(me.q);
   me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
   me.barrier.position = me.position;
   me.barrier.visible = false;
@@ -613,6 +641,8 @@ function Controls(camera) {
       camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH/2.8, MAP_WIDTH/2.8);
     if (z)
       camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT/4.0, MAP_HEIGHT/1.9);
+
+    me.rotation.z += .03;
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {
