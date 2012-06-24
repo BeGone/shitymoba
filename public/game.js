@@ -417,8 +417,8 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   cache['minion'].rotation.x = Math.PI / 2;
   cache['minion'].scale.set(.2, .2, .2);
   minion_ready = true;
-  
-  
+
+
 });
 
 
@@ -467,7 +467,9 @@ function init() {
   me.position.set(0, 26, 0);
   scene.add(me);
   scene.add(me.barrier);
-  requestAnimationFrame(render);
+  setInterval(function(){
+    requestAnimationFrame(render);
+  }, 1000/60);
 }
 
 //minions
@@ -485,7 +487,7 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
     minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
     minion.barrier.setAngularVelocity(zeroVector);
     minion.barrier.setAngularFactor(zeroVector);
-  
+
   //} else {
   //  console.error("No such entity: " + name);
   //}
@@ -496,12 +498,9 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
 function spawn_minions() {
   spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
   spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
-  setInterval(function(){
-    requestAnimationFrame(render);
-  }, 1000/60);
 }
 
-setInterval(function() {spawn_minions();}, 3000); 
+setInterval(function() {spawn_minions();}, 3000);
 
 
 function render() {
@@ -512,7 +511,7 @@ function render() {
 }
 
 function Controls(camera) {
-  
+
   this.camera = camera;
   var up, down, left, right, x, z, pointerX, pointerY;
   var speed = 10;
@@ -531,8 +530,8 @@ function Controls(camera) {
       pointerX = event.movementX || event.webkitMovementX;
       pointerY = event.movementY || event.webkitMovementY;
       cache['hand'] = [
-        THREE.Math.clamp(cache['hand'][0] + pointerY, 10, height - 20),
-        THREE.Math.clamp(cache['hand'][1] + pointerX, 10, width - 20)
+        THREE.Math.clamp(cache['hand'][0] + pointerY, 10, height - 10),
+        THREE.Math.clamp(cache['hand'][1] + pointerX, 10, width - 10)
       ]
       hand.style.top = cache['hand'][0] + 'px';
       hand.style.left = cache['hand'][1] + 'px';
@@ -558,26 +557,20 @@ function Controls(camera) {
       case 39: /*right*/ right = false; break;
     }
   });
-  this.update_minions = function(delta) {
-    /*for (int i = 0; i < minions.length; ++i) {
-      
-    }*/
-  }
+  this.update_minions = function(delta) { }
   this.update = function(delta){
-/*
-    if (up && !down || cache['mouse'][1] < 30)
+    if (cache['hand'][0] < 15)
       z -= speed;
-    if (!up && down || cache['mouse'][1] > height - 30)
+    if (cache['hand'][0] > height - 15)
       z += speed;
-    if (left && !right || cache['mouse'][0] < 30)
+    if (cache['hand'][1] < 15)
       x -= speed;
-    if (!left && right || cache['mouse'][0] > width - 30)
+    if (cache['hand'][1] > width - 15)
       x += speed;
     if (x)
       camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH + 200, MAP_WIDTH - 200);
     if (z)
       camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT + 550, MAP_HEIGHT);
-*/
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {
@@ -599,6 +592,6 @@ function Controls(camera) {
     x = 0;
     z = 0;
     this.update_minions(delta);
-    
+
   }
 }
