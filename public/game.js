@@ -31,9 +31,9 @@ container.appendChild(stats.domElement);
 scene.add(new THREE.PointLight());
 
 //element is a list of all objects on the browser, the fist object is the hero
-var element = {}, 
+var element = {},
     locations = new Array(MAP_WIDTH * MAP_HEIGHT);
-var minionCounts = 0;//use this to retreive minion; for the first user minion_id is playerid + minionCounts; for the other, the other way around 
+var minionCounts = 0;//use this to retreive minion; for the first user minion_id is playerid + minionCounts; for the other, the other way around
 
 var dijkstra = {
   single_source_shortest_paths: function(graph, s, d) {
@@ -377,7 +377,7 @@ function mousedown(event) {
     var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
     var intersections = ray.intersectObject(map);
       //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
-  //follow; 4. empty: go 
+  //follow; 4. empty: go
 
     if (intersections[0])
       me.destination = ray.intersectObject(map)[0].point;
@@ -478,6 +478,7 @@ function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
   me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
   me.barrier.position = me.position;
+  me.barrier.visible = false;
   me.position.set(0, 26, 0);
   scene.add(me);
   scene.add(me.barrier);
@@ -493,16 +494,16 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
   //if (name == 'minion') {
     var minionObj = {
       health: 50,
-      range:  5, 
+      range:  5,
       damage: 5,
       isChampion: false,
       isAlive:    true
     }
     /*
-    if (destY > 0) { 
+    if (destY > 0) {
       //minions from the upper right corner! team A!
       //team A minions are all even number
-      minionObj.teamA = true;  
+      minionObj.teamA = true;
       element[ID + minionCounts] = minionObj;
     } else {
       minionObj.teamA = false;
@@ -532,7 +533,7 @@ function spawn_minions() {
   requestAnimationFrame(render);
 }
 
-setInterval(function() {spawn_minions();}, 5000); 
+setInterval(function() {spawn_minions();}, 5000);
 
 function render() {
   scene.simulate(undefined, 1);
@@ -560,8 +561,8 @@ function Controls(camera) {
       pointerX = event.movementX || event.webkitMovementX;
       pointerY = event.movementY || event.webkitMovementY;
       cache['hand'] = [
-        THREE.Math.clamp(cache['hand'][0] + pointerY, 10, height - 10),
-        THREE.Math.clamp(cache['hand'][1] + pointerX, 10, width - 10)
+        THREE.Math.clamp(cache['hand'][0] + pointerY, 0, height - 10),
+        THREE.Math.clamp(cache['hand'][1] + pointerX, 0, width - 10)
       ]
       hand.style.top = cache['hand'][0] + 'px';
       hand.style.left = cache['hand'][1] + 'px';
@@ -589,11 +590,11 @@ function Controls(camera) {
   });
   this.update_minions = function(delta) { }
   this.update = function(delta){
-    if (cache['hand'][0] < 15)
+    if (cache['hand'][0] < 5)
       z -= speed;
     if (cache['hand'][0] > height - 15)
       z += speed;
-    if (cache['hand'][1] < 15)
+    if (cache['hand'][1] < 5)
       x -= speed;
     if (cache['hand'][1] > width - 15)
       x += speed;
