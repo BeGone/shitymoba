@@ -165,18 +165,18 @@ var distanceFrom = function(cor1, cor2) {
 }
 
 nodes = {
-  innerBottom: {x:0, z:100},
-  innerTop: {x:0, z:-100},
-  innerLeft: {x:-100, z:0},
-  innerRight: {x:100, z:0},
-  bottomRightB: {x:300, z:400},
-  bottomRightR: {x:400, z:300},
-  bottomLeftB: {x:-300, z:400},
-  bottomLeftL: {x:-400, z:300},
-  topRightR: {x:400, z:-300},
-  topRightT: {x:300, z:-400},
-  topLeftT: {x:-300, z:-400},
-  topLeftL: {x:-400, z:-300}
+  innerBottom: {x:0, z:MAP_HEIGHT*0.05},
+  innerTop: {x:0, z:-MAP_HEIGHT*0.05},
+  innerLeft: {x:-MAP_WIDTH*0.05, z:0},
+  innerRight: {x:MAP_WIDTH*0.05, z:0},
+  bottomRightB: {x:MAP_WIDTH*0.25, z:MAP_HEIGHT*0.35},
+  bottomRightR: {x:MAP_WIDTH*0.35, z:MAP_HEIGHT*0.25},
+  bottomLeftB: {x:-MAP_WIDTH*0.25, z:MAP_HEIGHT*0.35},
+  bottomLeftL: {x:-MAP_WIDTH*0.35, z:MAP_HEIGHT*0.25},
+  topRightR: {x:MAP_WIDTH*0.35, z:-MAP_HEIGHT*0.25},
+  topRightT: {x:MAP_WIDTH*0.25, z:-MAP_HEIGHT*0.35},
+  topLeftT: {x:-MAP_WIDTH*0.25, z:-MAP_HEIGHT*0.35},
+  topLeftL: {x:-MAP_WIDTH*0.35, z:-MAP_HEIGHT*0.25}
 }
 
 var findClosestNode = function(pos) {
@@ -367,24 +367,23 @@ map_material = new THREE.MeshBasicMaterial({ map: map_texture });
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material,  0);
 scene.add(map);
 
+/*
 cylinder_material = new THREE.MeshBasicMaterial({ color: 0x000000 })
 var me = new Physijs.CylinderMesh(new THREE.CylinderGeometry(10, 10, 50), cylinder_material);
 me.position.set(0, 35, -200);
 scene.add(me);
-
+*/
 
 var box = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 100, 20));
 box.position.set(0, 50, -250);
 box.mass = 0;
 scene.add(box);
 
-me.castShadow = true;
-map.receiveShadow  = true;
-
 requestAnimationFrame(render);
 
-/*
+
 var loader = new THREE.JSONLoader();
+
 loader.load('karthus.js', function (geometry) {
   var material = geometry.materials[0];
   cache['karthus'] = new THREE.Mesh(geometry, material);
@@ -393,7 +392,6 @@ loader.load('karthus.js', function (geometry) {
   cache['karthus'].scale.set(.3, .3, .3);
   init();
 });
-*/
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping; 
@@ -428,7 +426,7 @@ function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
   me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
   me.barrier.position = me.position;
-  me.position.set(0, 26, -200);
+  me.position.set(0, 26, 0);
   scene.add(me);
   scene.add(me.barrier);
 
@@ -446,7 +444,6 @@ function init() {
 function render() {
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
-  renderer.shadowMapEnabled = true;
   controls.update(clock.getDelta());
   stats.update();
   requestAnimationFrame(render);
@@ -496,7 +493,7 @@ function Controls(camera) {
         var item = directionsQueue.dequeue();
       }
       if (directionsQueue.getLength() <= 1 && distanceFrom(me.position, directionsQueue.peek()) < 1) {
-        me.setLinearVelocity(zeroV);
+        me.barrier.setLinearVelocity(zeroV);
       } else {
         var newDest = directionsQueue.peek();
         var newDestVector = new THREE.Vector3(newDest.x, 0, newDest.z);
@@ -520,13 +517,13 @@ function Controls(camera) {
         }
         */
         velocityVector.y = 0;
-        //me.barrier.setLinearVelocity(velocityVector);
-        me.setLinearVelocity(velocityVector);
+        me.barrier.setLinearVelocity(velocityVector);
+        //me.setLinearVelocity(velocityVector);
       }
-      //me.barrier.setAngularVelocity(zeroV);
-      //me.barrier.setAngularFactor(zeroV);
-      me.setAngularVelocity(zeroV);
-      me.setAngularFactor(zeroV);
+      me.barrier.setAngularVelocity(zeroV);
+      me.barrier.setAngularFactor(zeroV);
+      //me.setAngularVelocity(zeroV);
+      //me.setAngularFactor(zeroV);
     }
     x = 0;
     z = 0;
