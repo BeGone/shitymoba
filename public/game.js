@@ -624,7 +624,8 @@ function Controls(camera) {
     this.update_minions(delta);
   }
 }
-/*
+
+
 var connect = function() {
     var port = location.host == "localhost" ? 80 : 2011;
     window.socket = new WebSocket('ws://'+location.host+':'+port+'/websocket/'+ID);
@@ -637,29 +638,28 @@ var connect = function() {
       for (i in msgs) {
         var msg = msgs[i];
         if (msg.type === 'pos') {
-          if (!msg['pos']) {
-                    } else {
+          //only propagate move while it's the champion
+          if (msg['pos']) {
             var model;
-            if (!Game.players[msg.id]) {
-              model = THREE.SceneUtils.cloneObject(Game.model);
-              model.rifle = THREE.SceneUtils.cloneObject(Game.rifle);
-              if (msg.id % 2)
-                model.material = Game.red_material;
-              model.uid = msg.id;
-              model.alive = true;
-              Game.scene.add(model);
+            if (!element[msg.id]) {
+              model = THREE.SceneUtils.cloneObject(cache['karthus']);
+              var champion = {
+                health: 100,
+                range:  10,
+                damage: 20,
+                isChamp: true,
+                isAlive: true,
+                isTeamA:    true // TODO there should be ways for champions to know whether they are team a or team be from the server
+              }
 
-              var barrier = Game.createBarrier();
-              barrier.name = msg.id;
-              model.barrier = barrier;
-              Game.scene.add(barrier);
-              barrier.position = model.rifle.position = model.position;
+              element[msg.id] = champion
 
-              model.rifle.rotation = model.rotation;
-              Game.scene.add(model.rifle);
-              Game.players[msg.id] = model;
+              model.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
+              model.barrier.position = model.position;
+              scene.add(model);
+              scene.add(model.barrier);
             }
-            model = Game.players[msg.id];
+            model = element[msg.id];
             model.position.set(msg.pos.px, msg.pos.py, msg.pos.pz);
             model.rotation.set(0, msg.pos.r + Math.PI, 0);
             model.barrier.__dirtyPosition = true;
@@ -673,21 +673,16 @@ var connect = function() {
             })(model.barrier), 100);
           }
         } else if (msg.type === 'kill') {
-          if (msg.victim == Game.id) {
-            Game.alive = false;
-            Game.text.style.display = 'block';
-            Game.text.innerHTML = 'killed by user ' + msg.id;
-            Game.overlay.style.display = 'block';
-            Game.spawn(3000);
+          if (msg.victim == ID) {
+            element[msg.victim].alive = false;
+            //TODO myself gets killed!
           } else {
             console.error('KO!');
-            Game.players[msg.victim].alive = false;
-            Game.players[msg.victim].rotation.set(-Math.PI/2, 0, 0);
+            element[msg.victim].alive = false;
+            element[msg.victim].rotation.set(-Math.PI/2, 0, 0);
           }
         }
       }
     }
 }
-*/
-
 
