@@ -1,5 +1,5 @@
-var MAP_WIDTH = 10000;
-var MAP_HEIGHT = 10000;
+var MAP_WIDTH = 1000;
+var MAP_HEIGHT = 1000;
 var WALL_HEIGHT = 200;
 var cache = {};
 var zeroV = new THREE.Vector3(0, 0, 0);
@@ -383,6 +383,7 @@ map.receiveShadow  = true;
 
 requestAnimationFrame(render);
 
+/*
 var loader = new THREE.JSONLoader();
 loader.load('karthus.js', function (geometry) {
   var material = geometry.materials[0];
@@ -392,6 +393,7 @@ loader.load('karthus.js', function (geometry) {
   cache['karthus'].scale.set(.3, .3, .3);
   init();
 });
+*/
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping; 
@@ -518,10 +520,13 @@ function Controls(camera) {
         }
         */
         velocityVector.y = 0;
-        me.barrier.setLinearVelocity(vector);
+        //me.barrier.setLinearVelocity(velocityVector);
+        me.setLinearVelocity(velocityVector);
       }
-      me.barrier.setAngularVelocity(zeroV);
-      me.barrier.setAngularFactor(zeroV);
+      //me.barrier.setAngularVelocity(zeroV);
+      //me.barrier.setAngularFactor(zeroV);
+      me.setAngularVelocity(zeroV);
+      me.setAngularFactor(zeroV);
     }
     x = 0;
     z = 0;
