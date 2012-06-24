@@ -4,6 +4,8 @@ var MAP_HEIGHT = 2000;
 var WALL_HEIGHT = 200;
 var me = null;
 var cache = {};
+var polySet = {poly: []};
+var movementQueue = [];
 var zeroVector = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
@@ -82,8 +84,21 @@ function mousedown(event) {
     } else if (event.which == 3) { // right click
       //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
       //follow; 4. empty: go
-      if (intersections[0])
-        me.destination = intersections[0].point;
+		if (intersections[0]) {
+			var endPt = intersections[0].point;
+			console.log(shortestPath({x: me.position.x, y: me.position.z}, {x: endPt.x, y: endPt.z}, polySet, function(solutionPts) {
+				movementQueue = [];
+				if (solutionPts.length == 0) {
+					movementQueue.push(endPt);
+				} else {
+					console.log(solutionPts);
+					for (var i = 0; i < solutionPts.length; i++) {
+						console.log("detour");
+						movementQueue.push(new THREE.Vector3(solutionPts[i].x, 0, solutionPts[i].y));
+					}
+				}
+			}));
+		}
     }
   }
 };
@@ -192,6 +207,17 @@ for (var i = 0; i < wall_coords.length; ++i) {
   addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
 }
 
+var pts_objects = [];
+
+for (var i = 2; i < 6; ++i) {
+	var pt = {};
+	pt.x = wall_coords[i][0];
+	pt.y = wall_coords[i][1];
+	pts_objects.push(pt);
+}
+
+polySet.poly.push({pts: pts_objects});
+	
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
   me.q = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshBasicMaterial({ color: 0xA52A2A }));
@@ -328,14 +354,21 @@ function Controls(camera) {
 
     me.rotation.z += .03;
 
-    if (me && me.destination) {
-        var newDestVector = new THREE.Vector3(newDest.x, 0, newDest.z);
-        var normVector = me.position.clone().subSelf(newDestVector).negate().normalize();
-        var velocityVector = normVector.multiplyScalar(100);
-        velocityVector.y = 0;
-        me.barrier.setLinearVelocity(velocityVector);
-      me.barrier.setAngularVelocity(zeroVector);
-      me.barrier.setAngularFactor(zeroVector);
+    if (me) {
+		if (!me.destination || (!me.position.equals(me.destination))) {
+			if (movementQueue.length != 0) {
+				me.destination = movementQueue.shift();
+			}
+		}
+		if (me.destination) {
+			var newDestVector = new THREE.Vector3(me.destination.x, 0, me.destination.z);
+			var normVector = me.position.clone().subSelf(newDestVector).negate().normalize();
+			var velocityVector = normVector.multiplyScalar(100);
+			velocityVector.y = 0;
+			me.barrier.setLinearVelocity(velocityVector);
+			me.barrier.setAngularVelocity(zeroVector);
+			me.barrier.setAngularFactor(zeroVector);
+		}
     }
     x = 0;
     z = 0;
