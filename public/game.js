@@ -462,13 +462,11 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   minion_ready = true;
 });
 
-/*
-loader.load('tree.js', function (geometry) {
+loader.load('beech.js', function (geometry) {
   var material = geometry.materials[0];
   cache['tree'] = new THREE.Mesh(geometry, material);
-  console.log('tree!!!', material);
+  cache['tree'].scale.multiplyScalar(20);
 });
-*/
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
@@ -480,7 +478,7 @@ getDistance = function(x1, z1, x2, z2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(z1 - z2, 2));
 };
 
-addWall = function(x1, z1, x2, z2) {
+var addWall = function(x1, z1, x2, z2) {
   var wall_geometry = new THREE.PlaneGeometry(getDistance(x1, z1, x2, z2), WALL_HEIGHT);
   var wall_mesh = new Physijs.BoxMesh(wall_geometry, wall_material, 0);
   wall_mesh.doubleSided = true;
