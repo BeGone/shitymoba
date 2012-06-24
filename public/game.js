@@ -221,7 +221,7 @@ for (var i = 2; i < 6; ++i) {
 }
 
 polySet.poly.push({pts: pts_objects});
-	
+
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
   me.q = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshBasicMaterial({ color: 0x3379b3 }));
@@ -231,6 +231,7 @@ function init() {
   me.w = new THREE.Sprite({ map: THREE.ImageUtils.loadTexture('circle.png'), useScreenCoordinates: false });
   me.w.opacity = 0.5;
   me.w.position = me.position;
+  me.w.visible = false;
   scene.add(me.w);
 
   me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
