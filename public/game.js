@@ -1,3 +1,4 @@
+var ID = THREE.Math.randInt(0, 10000)+"";
 var MAP_WIDTH = 2000;
 var MAP_HEIGHT = 2000;
 var WALL_HEIGHT = 200;
@@ -25,6 +26,11 @@ stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 container.appendChild(stats.domElement);
 scene.add(new THREE.PointLight());
+
+//element is a list of all objects on the browser, the fist object is the hero
+var element = {}, 
+    locations = new Array(MAP_WIDTH * MAP_HEIGHT);
+var minionCounts = 0;//use this to retreive minion; for the first user minion_id is playerid + minionCounts; for the other, the other way around 
 
 var dijkstra = {
   single_source_shortest_paths: function(graph, s, d) {
@@ -345,6 +351,9 @@ function onclick(event) {
   var intersections = ray.intersectObject(map);
   if (intersections[0])
     me.destination = ray.intersectObject(map)[0].point;
+  
+  //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
+  //follow; 4. empty: go 
 
   var endNode = findClosestNode(me.destination);
   var startNode = findClosestNode(me.position);
@@ -379,6 +388,15 @@ loader.load('karthus.js', function (geometry) {
   cache['karthus'].flipSided = true;
   cache['karthus'].rotation.x = Math.PI / 2;
   cache['karthus'].scale.set(.3, .3, .3);
+  var champion = {
+    health: 100,
+    range:  10,
+    damage: 20,
+    isChamp: true,
+    isAlive: true,
+    isTeamA:    true // TODO there should be ways for champions to know whether they are team a or team be from the server
+  }
+  element[ID] = champion;
   init();
 });
 
@@ -389,13 +407,13 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   cache['minion'] = new THREE.Mesh(geometry, material);
   cache['minion'].flipSided = true;
   cache['minion'].rotation.x = Math.PI / 2;
-  cache['minion'].scale.set(.3, .3, .3);
+  cache['minion'].scale.set(.2, .2, .2);
   minion_ready = true;
-}
+  
+  
+});
 
-setInterval(function(spawn('minion')) {
-    
-}, 1000); 
+
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
@@ -444,20 +462,54 @@ function init() {
   requestAnimationFrame(render);
 }
 
-function spawn(name) {
-  if (name == 'minion') {
+//minions
+minions = new Array(100);
+function spawn_minion(x, z, vx, vz, destX, destY) {
+  if (minion_ready) {
+  //if (name == 'minion') {
+    var minionObj = {
+      health: 50,
+      range:  5, 
+      damage: 5,
+      isChampion: false,
+      isAlive:    true
+    }
+    /*
+    if (destY > 0) { 
+      //minions from the upper right corner! team A!
+      //team A minions are all even number
+      minionObj.teamA = true;  
+      element[ID + minionCounts] = minionObj;
+    } else {
+      minionObj.teamA = false;
+      element[minionCounts + ID] = minionObj;
+    }*/
     var minion = THREE.SceneUtils.cloneObject(cache['minion']);
-    minion.barrier = new Physijs.CylinderMinionsh(new THREE.CylinderGeominiontry(17, 17, 50));
+    minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(5, 5, 10));
     minion.barrier.position = minion.position;
-      minion.position.set(Math.random() * 100, 26, Math.random() * 100);
+    minion.position.set(x, 26, z);
     scene.add(minion);
     scene.add(minion.barrier);
-  } else {
-    console.error("No such entity: " + name);
+    //TODO need a selector to take it off from the scene
+    minions.push(minionObj);
+    minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
+    minion.barrier.setAngularVelocity(zeroVector);
+    minion.barrier.setAngularFactor(zeroVector);
+  
+  //} else {
+  //  console.error("No such entity: " + name);
+  //}
+
   }
+}
+
+function spawn_minions() {
+  spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
+  spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
   requestAnimationFrame(render);
 }
 
+setInterval(function() {spawn_minions();}, 5000); 
 
 
 function render() {
@@ -469,6 +521,7 @@ function render() {
 }
 
 function Controls(camera) {
+  
   this.camera = camera;
   var up, down, left, right, x, z;
   var speed = 10;
@@ -489,7 +542,11 @@ function Controls(camera) {
       case 39: /*right*/ right = false; break;
     }
   });
-
+  this.update_minions = function(delta) {
+    /*for (int i = 0; i < minions.length; ++i) {
+      
+    }*/
+  }
   this.update = function(delta){
     if (up && !down || cache['mouse'][1] < 30)
       z -= speed;
@@ -524,5 +581,74 @@ function Controls(camera) {
     }
     x = 0;
     z = 0;
+    this.update_minions(delta);
+    
   }
 }
+/*
+var connect = function() {
+    var port = location.host == "localhost" ? 80 : 2011;
+    window.socket = new WebSocket('ws://'+location.host+':'+port+'/websocket/'+ID);
+    window.socket.onopen = function(event){ console.log('websocket opened') }
+    window.socket.onclose = function(event){ console.log('websocket closed') }
+    window.socket.onerror = function(event){ alert(event) }
+    window.socket.onmessage = function(event){
+      var msgs = JSON.parse(event.data);
+      //console.log(msgs);
+      for (i in msgs) {
+        var msg = msgs[i];
+        if (msg.type === 'pos') {
+          if (!msg['pos']) {
+                    } else {
+            var model;
+            if (!Game.players[msg.id]) {
+              model = THREE.SceneUtils.cloneObject(Game.model);
+              model.rifle = THREE.SceneUtils.cloneObject(Game.rifle);
+              if (msg.id % 2)
+                model.material = Game.red_material;
+              model.uid = msg.id;
+              model.alive = true;
+              Game.scene.add(model);
+
+              var barrier = Game.createBarrier();
+              barrier.name = msg.id;
+              model.barrier = barrier;
+              Game.scene.add(barrier);
+              barrier.position = model.rifle.position = model.position;
+
+              model.rifle.rotation = model.rotation;
+              Game.scene.add(model.rifle);
+              Game.players[msg.id] = model;
+            }
+            model = Game.players[msg.id];
+            model.position.set(msg.pos.px, msg.pos.py, msg.pos.pz);
+            model.rotation.set(0, msg.pos.r + Math.PI, 0);
+            model.barrier.__dirtyPosition = true;
+            model.barrier.setAngularFactor(Game.zeroVector);
+            model.barrier.setAngularVelocity(Game.zeroVector);
+
+            model.barrier.setLinearVelocity(new THREE.Vector3(msg.pos.vx, 0, msg.pos.vz));
+            clearTimeout(model.barrier.timer);
+            model.barrier.timer = setTimeout((function(barrier) {
+              barrier.setLinearVelocity(Game.zeroVector);
+            })(model.barrier), 100);
+          }
+        } else if (msg.type === 'kill') {
+          if (msg.victim == Game.id) {
+            Game.alive = false;
+            Game.text.style.display = 'block';
+            Game.text.innerHTML = 'killed by user ' + msg.id;
+            Game.overlay.style.display = 'block';
+            Game.spawn(3000);
+          } else {
+            console.error('KO!');
+            Game.players[msg.victim].alive = false;
+            Game.players[msg.victim].rotation.set(-Math.PI/2, 0, 0);
+          }
+        }
+      }
+    }
+}
+*/
+
+
