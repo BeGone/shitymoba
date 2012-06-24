@@ -19,6 +19,7 @@ var stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 container.appendChild(stats.domElement);
+scene.add(new THREE.PointLight());
 
 window.addEventListener('resize', onresize, false);
 function onresize(event) {
@@ -43,17 +44,30 @@ map_material = new THREE.MeshBasicMaterial({ map: map_texture });
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000), map_material,  0);
 scene.add(map);
 
-var me = new Physijs.CylinderMesh(new THREE.CylinderGeometry(10, 10, 50));
-me.position.set(0, 26, -200);
-scene.add(me);
+var loader = new THREE.JSONLoader();
+loader.load('karthus.js', function (geometry) {
+  var material = geometry.materials[0];
+  console.log(material);
+  cache['karthus'] = new THREE.Mesh(geometry, material);
+  cache['karthus'].flipSided = true;
+  cache['karthus'].rotation.x = Math.PI/2;
+  //cache['karthus'].scale.set(.2, .2, .2);
+  init();
+});
 
 
-var box = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 20, 20));
-box.position.set(0, 10, -250);
-box.mass = 0;
-scene.add(box);
+function init() {
+  me = THREE.SceneUtils.cloneObject(cache['karthus']);
+  me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(125, 125, 50));
+  //me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(12.5, 12.5, 50));
+  me.barrier.position = me.position;
+  me.position.set(0, 26, -200);
+  scene.add(me);
+  scene.add(me.barrier);
 
-requestAnimationFrame(render);
+  requestAnimationFrame(render);
+}
+
 function render() {
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
@@ -93,12 +107,14 @@ function Controls(camera) {
     if (!left && right)
       camera.position.x = THREE.Math.clamp(camera.position.x + 10, -200, 200);
 
+    me.rotation.z += 0.03;
+
     if (me && me.destination) {
       var vector = me.position.subSelf(me.destination).normalize().negate().multiplyScalar(100);
       vector.y = 0;
-      me.setLinearVelocity(vector);
-      me.setAngularVelocity(zeroV);
-      me.setAngularFactor(zeroV);
+      me.barrier.setLinearVelocity(vector);
+      me.barrier.setAngularVelocity(zeroV);
+      me.barrier.setAngularFactor(zeroV);
     }
   }
 }
