@@ -389,7 +389,7 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   cache['minion'] = new THREE.Mesh(geometry, material);
   cache['minion'].flipSided = true;
   cache['minion'].rotation.x = Math.PI / 2;
-  cache['minion'].scale.set(.3, .3, .3);
+  cache['minion'].scale.set(.2, .2, .2);
   minion_ready = true;
   
   
@@ -450,7 +450,7 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
   if (minion_ready) {
   //if (name == 'minion') {
     var minion = THREE.SceneUtils.cloneObject(cache['minion']);
-    minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
+    minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(5, 5, 10));
     minion.barrier.position = minion.position;
     minion.position.set(x, 26, z);
     scene.add(minion);
