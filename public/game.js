@@ -27,6 +27,7 @@ var controls = new Controls(camera);
 var stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
+stats.domElement.style.left = '200px';
 container.appendChild(stats.domElement);
 scene.add(new THREE.PointLight());
 
@@ -420,14 +421,17 @@ function attack(letter, model, vector) {
         }, 1000);
       }
       break;
+    case 'w':
+      model.w.visible = !model.w.visible;
+      break;
   }
 }
 
-var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
+var map_texture = new THREE.ImageUtils.loadTexture('grass.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
-map_texture.repeat.set(100, 100);
+map_texture.repeat.set(40, 40);
 map_material = new THREE.MeshBasicMaterial({ map: map_texture });
-var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material,  0);
+var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material, 0);
 scene.add(map);
 
 
@@ -508,10 +512,15 @@ for (var i = 0; i < wall_coords.length; ++i) {
 
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
-  me.q = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshBasicMaterial({ color: 0xA52A2A }));
+  me.q = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshBasicMaterial({ color: 0x3379b3 }));
   me.q.visible = false;
   me.q.position.set(0, Math.pow(10, 9), 0);
   scene.add(me.q);
+  me.w = new THREE.Sprite({ map: THREE.ImageUtils.loadTexture('circle.png'), useScreenCoordinates: false });
+  me.w.opacity = 0.5;
+  me.w.position = me.position;
+  scene.add(me.w);
+
   me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
   me.barrier.position = me.position;
   me.barrier.visible = false;
@@ -609,6 +618,7 @@ function Controls(camera) {
   document.addEventListener('mousemove', onmousemove);
   document.addEventListener('keydown', function(event) {
     switch(event.keyCode) {
+      case 87: /*w*/ attack('w', me, zeroVector); break;
       case 38: /*up*/ up = true; break;
       case 37: /*left*/ left = true; break;
       case 40: /*down*/ down = true; break;
@@ -641,6 +651,8 @@ function Controls(camera) {
       camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT/4.0, MAP_HEIGHT/1.9);
 
     me.rotation.z += .03;
+    if (me.w.visible)
+      me.w.rotation += .03;
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {

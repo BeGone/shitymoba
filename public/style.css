@@ -3,11 +3,17 @@ body {
   padding: 0px;
 } #hand {
   display: none;
+  z-index: 1002;
+  position: absolute;
+} #overlay {
+  width: 100%;
+  height: 100%;
+  z-index: 1001;
   position: absolute;
 } #tip {
   top: 30%;
   left: 30%;
-  z-index: 1000;
+  z-index: 1005;
   padding: 10px;
   position: absolute;
   border: 2px solid gray;
