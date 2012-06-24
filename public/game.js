@@ -391,11 +391,11 @@ loader.load('Blue_Minion_Wizard.js', function (geometry) {
   cache['minion'].rotation.x = Math.PI / 2;
   cache['minion'].scale.set(.3, .3, .3);
   minion_ready = true;
-}
+  
+  
+});
 
-setInterval(function(spawn('minion')) {
-    
-}, 1000); 
+
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
@@ -444,20 +444,36 @@ function init() {
   requestAnimationFrame(render);
 }
 
-function spawn(name) {
-  if (name == 'minion') {
+//minions
+minions = new Array(100);
+function spawn_minion(x, z, vx, vz, destX, destY) {
+  if (minion_ready) {
+  //if (name == 'minion') {
     var minion = THREE.SceneUtils.cloneObject(cache['minion']);
-    minion.barrier = new Physijs.CylinderMinionsh(new THREE.CylinderGeominiontry(17, 17, 50));
+    minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
     minion.barrier.position = minion.position;
-      minion.position.set(Math.random() * 100, 26, Math.random() * 100);
+    minion.position.set(x, 26, z);
     scene.add(minion);
     scene.add(minion.barrier);
-  } else {
-    console.error("No such entity: " + name);
+    minions.push(minion);
+    minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
+    minion.barrier.setAngularVelocity(zeroVector);
+    minion.barrier.setAngularFactor(zeroVector);
+  
+  //} else {
+  //  console.error("No such entity: " + name);
+  //}
+
   }
+}
+
+function spawn_minions() {
+  spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
+  spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
   requestAnimationFrame(render);
 }
 
+setInterval(function() {spawn_minions();}, 3000); 
 
 
 function render() {
@@ -469,6 +485,7 @@ function render() {
 }
 
 function Controls(camera) {
+  
   this.camera = camera;
   var up, down, left, right, x, z;
   var speed = 10;
@@ -489,7 +506,11 @@ function Controls(camera) {
       case 39: /*right*/ right = false; break;
     }
   });
-
+  this.update_minions = function(delta) {
+    /*for (int i = 0; i < minions.length; ++i) {
+      
+    }*/
+  }
   this.update = function(delta){
     if (up && !down || cache['mouse'][1] < 30)
       z -= speed;
@@ -524,5 +545,7 @@ function Controls(camera) {
     }
     x = 0;
     z = 0;
+    this.update_minions(delta);
+    
   }
 }
