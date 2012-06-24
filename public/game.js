@@ -391,7 +391,7 @@ loader.load('karthus.js', function (geometry) {
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping; 
 wall_texture.repeat.set(10, 10);
-var wall_material = new THREE.MeshBasicMaterial({ color : "0xffffff" });
+var wall_material = new THREE.MeshBasicMaterial({ color : "0x333333", opacity : 0.6 });
 
 // create walls
 getDistance = function(x1, z1, x2, z2) {
@@ -410,7 +410,8 @@ addWall = function(x1, z1, x2, z2) {
 };
 
 var wall_coords = [
-  [-MAP_WIDTH / 2, MAP_HEIGHT / 4, -MAP_WIDTH / 3, MAP_HEIGHT / 4],
+    [-MAP_WIDTH / 2, MAP_HEIGHT / 2, MAP_WIDTH / 2, MAP_HEIGHT / 2],
+  [-MAP_WIDTH * 5 / 12, MAP_HEIGHT / 4, -MAP_WIDTH / 3, MAP_HEIGHT / 4],
   [-MAP_WIDTH / 4, MAP_HEIGHT / 6, -MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12],
   [-MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12, -MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12],
   [-MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12, -MAP_WIDTH / 12, 0],
