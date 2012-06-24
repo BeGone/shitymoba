@@ -2,6 +2,7 @@ var cache = {};
 var zeroV = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
+cache['mouse'] = [width/2, height/2];
 var container = document.getElementById('container');
 var scene = new Physijs.Scene();
 scene.setGravity(zeroV);
@@ -19,6 +20,7 @@ var stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 container.appendChild(stats.domElement);
+scene.add(new THREE.PointLight());
 
 var dijkstra = {
   single_source_shortest_paths: function(graph, s, d) {
@@ -321,6 +323,9 @@ if (path.join() !== ['topLeftL', 'topLeftT', 'topRightR', 'topRightT', 'bottomLe
 var directionsQueue = new Queue();
 
 window.addEventListener('resize', onresize, false);
+document.addEventListener('click', onclick, false);
+document.addEventListener('mousemove', function (e) { cache['mouse'] = [e.offsetX, e.offsetY]; console.log(cache['mouse']); });
+
 function onresize(event) {
   width = window.innerWidth;
   height = window.innerHeight - 4;
@@ -329,11 +334,13 @@ function onresize(event) {
   camera.updateProjectionMatrix();
 }
 
-document.addEventListener('click', function(event) {
+function onclick(event) {
   var vector = new THREE.Vector3((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1, 1);
   projector.unprojectVector(vector, camera);
   var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
-  me.destination = ray.intersectObject(map)[0].point;
+  var intersections = ray.intersectObject(map);
+  if (intersections[0])
+    me.destination = ray.intersectObject(map)[0].point;
 
   var endNode = findClosestNode(me.destination);
   var startNode = findClosestNode(me.position);
@@ -352,9 +359,9 @@ document.addEventListener('click', function(event) {
 
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
-map_texture.repeat.set(10, 10);
+map_texture.repeat.set(100, 100);
 map_material = new THREE.MeshBasicMaterial({ map: map_texture });
-var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(1000, 1000), map_material,  0);
+var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(10000, 10000), map_material,  0);
 scene.add(map);
 
 cylinder_material = new THREE.MeshBasicMaterial({ color: 0x000000 })
@@ -372,6 +379,29 @@ me.castShadow = true;
 map.receiveShadow  = true;
 
 requestAnimationFrame(render);
+
+var loader = new THREE.JSONLoader();
+loader.load('karthus.js', function (geometry) {
+  var material = geometry.materials[0];
+  cache['karthus'] = new THREE.Mesh(geometry, material);
+  cache['karthus'].flipSided = true;
+  cache['karthus'].rotation.x = Math.PI/2;
+  cache['karthus'].scale.set(.3, .3, .3);
+  init();
+});
+
+
+function init() {
+  me = THREE.SceneUtils.cloneObject(cache['karthus']);
+  me.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(17, 17, 50));
+  me.barrier.position = me.position;
+  me.position.set(0, 26, -200);
+  scene.add(me);
+  scene.add(me.barrier);
+
+  requestAnimationFrame(render);
+}
+
 function render() {
   scene.simulate(undefined, 1);
   renderer.render(scene, camera);
@@ -383,7 +413,8 @@ function render() {
 
 function Controls(camera) {
   this.camera = camera;
-  var up, down, left, right;
+  var up, down, left, right, x, z;
+  var speed = 10;
 
   document.addEventListener('keydown', function(event) {
     switch(event.keyCode) {
@@ -403,14 +434,21 @@ function Controls(camera) {
   });
 
   this.update = function(delta){
-    if (up && !down)
-      camera.position.z = THREE.Math.clamp(camera.position.z - 10, 0, 600);
-    if (!up && down)
-      camera.position.z = THREE.Math.clamp(camera.position.z + 10, 0, 600);
-    if (left && !right)
-      camera.position.x = THREE.Math.clamp(camera.position.x - 10, -200, 200);
-    if (!left && right)
-      camera.position.x = THREE.Math.clamp(camera.position.x + 10, -200, 200);
+    if (up && !down || cache['mouse'][1] < 30)
+      z -= speed;
+    if (!up && down || cache['mouse'][1] > height - 30)
+      z += speed;
+    if (left && !right || cache['mouse'][0] < 30)
+      x -= speed;
+    if (!left && right || cache['mouse'][0] > width - 30)
+      x += speed;
+
+    if (x)
+      camera.position.x = THREE.Math.clamp(camera.position.x + x, -4800, 4800);
+    if (z)
+      camera.position.z = THREE.Math.clamp(camera.position.z + z, -4450, 5000);
+
+    me.rotation.z += 0.03;
 
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {
@@ -441,10 +479,12 @@ function Controls(camera) {
         }
         */
         velocityVector.y = 0;
-        me.setLinearVelocity(velocityVector);
+        me.barrier.setLinearVelocity(vector);
       }
-      me.setAngularVelocity(zeroV);
-      me.setAngularFactor(zeroV);
+      me.barrier.setAngularVelocity(zeroV);
+      me.barrier.setAngularFactor(zeroV);
     }
+    x = 0;
+    z = 0;
   }
 }
