@@ -1,6 +1,7 @@
 var MAP_WIDTH = 2000;
 var MAP_HEIGHT = 2000;
 var WALL_HEIGHT = 200;
+var me = null;
 var cache = {};
 var zeroVector = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
@@ -193,11 +194,11 @@ var findClosestNode = function(pos) {
 }
 
 graph = {
-  innerBottom: {bottomLeftB: distanceFrom(nodes.innerBottom, nodes.bottomLeftB), 
+  innerBottom: {bottomLeftB: distanceFrom(nodes.innerBottom, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.innerBottom, nodes.bottomLeftL),
-              bottomRightB: distanceFrom(nodes.innerBottom, nodes.bottomRightB), 
+              bottomRightB: distanceFrom(nodes.innerBottom, nodes.bottomRightB),
               bottomRightR: distanceFrom(nodes.innerBottom, nodes.bottomRightR),
-              topRightR: distanceFrom(nodes.innerBottom, nodes.topRightR), 
+              topRightR: distanceFrom(nodes.innerBottom, nodes.topRightR),
               topRightT: distanceFrom(nodes.innerBottom, nodes.topRightT),
               topLeftT: distanceFrom(nodes.innerBottom, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.innerBottom, nodes.topLeftL),
@@ -205,11 +206,11 @@ graph = {
               innerLeft: distanceFrom(nodes.innerBottom, nodes.innerLeft),
               innerTop: distanceFrom(nodes.innerBottom, nodes.innerTop)
              },
-  innerTop: {bottomLeftB: distanceFrom(nodes.innerTop, nodes.bottomLeftB), 
+  innerTop: {bottomLeftB: distanceFrom(nodes.innerTop, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.innerTop, nodes.bottomLeftL),
-              bottomRightB: distanceFrom(nodes.innerTop, nodes.bottomRightB), 
+              bottomRightB: distanceFrom(nodes.innerTop, nodes.bottomRightB),
               bottomRightR: distanceFrom(nodes.innerTop, nodes.bottomRightR),
-              topRightR: distanceFrom(nodes.innerTop, nodes.topRightR), 
+              topRightR: distanceFrom(nodes.innerTop, nodes.topRightR),
               topRightT: distanceFrom(nodes.innerTop, nodes.topRightT),
               topLeftT: distanceFrom(nodes.innerTop, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.innerTop, nodes.topLeftL),
@@ -217,11 +218,11 @@ graph = {
               innerLeft: distanceFrom(nodes.innerTop, nodes.innerLeft),
               innerBottom: distanceFrom(nodes.innerTop, nodes.innerBottom)
              },
-  innerLeft: {bottomLeftB: distanceFrom(nodes.innerLeft, nodes.bottomLeftB), 
+  innerLeft: {bottomLeftB: distanceFrom(nodes.innerLeft, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.innerLeft, nodes.bottomLeftL),
-              bottomRightB: distanceFrom(nodes.innerLeft, nodes.bottomRightB), 
+              bottomRightB: distanceFrom(nodes.innerLeft, nodes.bottomRightB),
               bottomRightR: distanceFrom(nodes.innerLeft, nodes.bottomRightR),
-              topRightR: distanceFrom(nodes.innerLeft, nodes.topRightR), 
+              topRightR: distanceFrom(nodes.innerLeft, nodes.topRightR),
               topRightT: distanceFrom(nodes.innerLeft, nodes.topRightT),
               topLeftT: distanceFrom(nodes.innerLeft, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.innerLeft, nodes.topLeftL),
@@ -229,11 +230,11 @@ graph = {
               innerTop: distanceFrom(nodes.innerLeft, nodes.innerTop),
               innerBottom: distanceFrom(nodes.innerLeft, nodes.innerBottom)
              },
-  innerRight:{bottomLeftB: distanceFrom(nodes.innerRight, nodes.bottomLeftB), 
+  innerRight:{bottomLeftB: distanceFrom(nodes.innerRight, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.innerRight, nodes.bottomLeftL),
-              bottomRightB: distanceFrom(nodes.innerRight, nodes.bottomRightB), 
+              bottomRightB: distanceFrom(nodes.innerRight, nodes.bottomRightB),
               bottomRightR: distanceFrom(nodes.innerRight, nodes.bottomRightR),
-              topRightR: distanceFrom(nodes.innerRight, nodes.topRightR), 
+              topRightR: distanceFrom(nodes.innerRight, nodes.topRightR),
               topRightT: distanceFrom(nodes.innerRight, nodes.topRightT),
               topLeftT: distanceFrom(nodes.innerRight, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.innerRight, nodes.topLeftL),
@@ -241,7 +242,7 @@ graph = {
               innerTop: distanceFrom(nodes.innerRight, nodes.innerTop),
               innerBottom: distanceFrom(nodes.innerRight, nodes.innerBottom)
              },
-  bottomRightB:{bottomLeftB: distanceFrom(nodes.bottomRightB, nodes.bottomLeftB), 
+  bottomRightB:{bottomLeftB: distanceFrom(nodes.bottomRightB, nodes.bottomLeftB),
               bottomRightR: distanceFrom(nodes.bottomRightB, nodes.bottomRightR),
               innerLeft: distanceFrom(nodes.bottomRightB, nodes.innerLeft),
               innerTop: distanceFrom(nodes.bottomRightB, nodes.innerTop),
@@ -250,7 +251,7 @@ graph = {
               topLeftT: distanceFrom(nodes.bottomRightB, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.bottomRightB, nodes.topLeftL)
              },
-  bottomRightR:{topRightR: distanceFrom(nodes.bottomRightR, nodes.topRightR), 
+  bottomRightR:{topRightR: distanceFrom(nodes.bottomRightR, nodes.topRightR),
               bottomRightB: distanceFrom(nodes.bottomRightR, nodes.bottomRightB),
               innerLeft: distanceFrom(nodes.bottomRightR, nodes.innerLeft),
               innerTop: distanceFrom(nodes.bottomRightR, nodes.innerTop),
@@ -259,7 +260,7 @@ graph = {
               topLeftT: distanceFrom(nodes.bottomRightR, nodes.topLeftT),
               topLeftL: distanceFrom(nodes.bottomRightR, nodes.topLeftL)
              },
-  bottomLeftB:{bottomRightB: distanceFrom(nodes.bottomLeftB, nodes.bottomRightB), 
+  bottomLeftB:{bottomRightB: distanceFrom(nodes.bottomLeftB, nodes.bottomRightB),
               bottomLeftL: distanceFrom(nodes.bottomLeftB, nodes.bottomLeftL),
               innerLeft: distanceFrom(nodes.bottomLeftB, nodes.innerLeft),
               innerTop: distanceFrom(nodes.bottomLeftB, nodes.innerTop),
@@ -268,7 +269,7 @@ graph = {
               topRightT: distanceFrom(nodes.bottomLeftB, nodes.topRightT),
               topRightR: distanceFrom(nodes.bottomLeftB, nodes.topRightR)
              },
-  bottomLeftL:{topLeftL: distanceFrom(nodes.bottomLeftL, nodes.topLeftL), 
+  bottomLeftL:{topLeftL: distanceFrom(nodes.bottomLeftL, nodes.topLeftL),
               bottomLeftB: distanceFrom(nodes.bottomLeftL, nodes.bottomLeftB),
               innerLeft: distanceFrom(nodes.bottomLeftL, nodes.innerLeft),
               innerTop: distanceFrom(nodes.bottomLeftL, nodes.innerTop),
@@ -277,7 +278,7 @@ graph = {
               topRightT: distanceFrom(nodes.bottomLeftL, nodes.topRightT),
               topRightR: distanceFrom(nodes.bottomLeftL, nodes.topRightR)
              },
-  topRightR: {topRightT: distanceFrom(nodes.topRightR, nodes.topRightT), 
+  topRightR: {topRightT: distanceFrom(nodes.topRightR, nodes.topRightT),
               bottomRightR: distanceFrom(nodes.topRightR, nodes.bottomRightR),
               innerLeft: distanceFrom(nodes.topRightR, nodes.innerLeft),
               innerTop: distanceFrom(nodes.topRightR, nodes.innerTop),
@@ -286,7 +287,7 @@ graph = {
               bottomLeftB: distanceFrom(nodes.topRightR, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.topRightR, nodes.bottomLeftL)
              },
-  topRightT: { topLeftT: distanceFrom(nodes.topRightT, nodes.topLeftT), 
+  topRightT: { topLeftT: distanceFrom(nodes.topRightT, nodes.topLeftT),
               topRightR: distanceFrom(nodes.topRightT, nodes.topRightR),
               innerLeft: distanceFrom(nodes.topRightT, nodes.innerLeft),
               innerTop: distanceFrom(nodes.topRightT, nodes.innerTop),
@@ -295,7 +296,7 @@ graph = {
               bottomLeftB: distanceFrom(nodes.topRightT, nodes.bottomLeftB),
               bottomLeftL: distanceFrom(nodes.topRightT, nodes.bottomLeftL)
             },
-  topLeftT: { topLeftL: distanceFrom(nodes.topLeftT, nodes.topLeftL), 
+  topLeftT: { topLeftL: distanceFrom(nodes.topLeftT, nodes.topLeftL),
               topRightT: distanceFrom(nodes.topLeftT, nodes.topRightT),
               innerLeft: distanceFrom(nodes.topLeftT, nodes.innerLeft),
               innerTop: distanceFrom(nodes.topLeftT, nodes.innerTop),
@@ -304,7 +305,7 @@ graph = {
               bottomRightB: distanceFrom(nodes.topLeftT, nodes.bottomRightB),
               bottomRightR: distanceFrom(nodes.topLeftT, nodes.bottomRightR)
             },
-  topLeftL: { topLeftT: distanceFrom(nodes.topLeftL, nodes.topLeftT), 
+  topLeftL: { topLeftT: distanceFrom(nodes.topLeftL, nodes.topLeftT),
               bottomLeftL: distanceFrom(nodes.topLeftL, nodes.bottomLeftL),
               innerLeft: distanceFrom(nodes.topLeftL, nodes.innerLeft),
               innerTop: distanceFrom(nodes.topLeftL, nodes.innerTop),
@@ -327,7 +328,7 @@ var directionsQueue = new Queue();
 
 window.addEventListener('resize', onresize, false);
 document.addEventListener('click', onclick, false);
-document.addEventListener('mousemove', function (e) { cache['mouse'] = [e.offsetX, e.offsetY]; console.log(cache['mouse']); });
+document.addEventListener('mousemove', function (e) { cache['mouse'] = [e.offsetX, e.offsetY] });
 
 function onresize(event) {
   width = window.innerWidth;
@@ -356,7 +357,7 @@ function onclick(event) {
     for (item in newPath) {
       directionsQueue.enqueue(nodes[newPath[item]]);
     }
-    directionsQueue.enqueue(me.destination);  
+    directionsQueue.enqueue(me.destination);
   }
 };
 
@@ -366,13 +367,6 @@ map_texture.repeat.set(100, 100);
 map_material = new THREE.MeshBasicMaterial({ map: map_texture });
 var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material,  0);
 scene.add(map);
-
-/*
-cylinder_material = new THREE.MeshBasicMaterial({ color: 0x000000 })
-var me = new Physijs.CylinderMesh(new THREE.CylinderGeometry(10, 10, 50), cylinder_material);
-me.position.set(0, 35, -200);
-scene.add(me);
-*/
 
 requestAnimationFrame(render);
 
@@ -404,7 +398,7 @@ setInterval(function(spawn('minion')) {
 }, 1000); 
 
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
-wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping; 
+wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
 wall_texture.repeat.set(10, 10);
 var wall_material = new THREE.MeshBasicMaterial({ color : "0x333333", opacity : 0.6 });
 
@@ -413,7 +407,7 @@ getDistance = function(x1, z1, x2, z2) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(z1 - z2, 2));
 };
 
-addWall = function(x1, z1, x2, z2) { 
+addWall = function(x1, z1, x2, z2) {
   var wall_geometry = new THREE.PlaneGeometry(getDistance(x1, z1, x2, z2), WALL_HEIGHT);
   var wall_mesh = new Physijs.BoxMesh(wall_geometry, wall_material, 0);
   wall_mesh.name = 'wall';
@@ -461,20 +455,10 @@ function spawn(name) {
   } else {
     console.error("No such entity: " + name);
   }
-
-}
-
-function init_walls() {
-  for (var i = 0; i < wall_coords.length; ++i) {
-    addWall(wall_coords[i][0], wall_coords[i][1], wall_coords[i][2], wall_coords[i][3]);
-    addWall(wall_coords[i][1], wall_coords[i][0], wall_coords[i][3], wall_coords[i][2]);
-    addWall(-wall_coords[i][1], -wall_coords[i][0], -wall_coords[i][3], -wall_coords[i][2]);
-    addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
-  }
   requestAnimationFrame(render);
 }
 
-            
+
 
 function render() {
   scene.simulate(undefined, 1);
@@ -521,8 +505,6 @@ function Controls(camera) {
     if (z)
       camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT + 550, MAP_HEIGHT);
 
-    me.rotation.z += 0.03;
-
     if (me && me.destination) {
       if (distanceFrom(me.position, directionsQueue.peek()) < 1 && directionsQueue.getLength() > 1) {
         var item = directionsQueue.dequeue();
@@ -532,33 +514,13 @@ function Controls(camera) {
       } else {
         var newDest = directionsQueue.peek();
         var newDestVector = new THREE.Vector3(newDest.x, 0, newDest.z);
-        var normVector = me.position.subSelf(newDestVector).negate().normalize();
+        var normVector = me.position.clone().subSelf(newDestVector).negate().normalize();
         var velocityVector = normVector.multiplyScalar(100);
-        //console.log(directionsQueue);
-        /*
-        var ray = new THREE.Ray(me.position, normVector.subSelf(me.position).normalize());
-        var intersectObjects = ray.intersectObject(box);
-
-        var g = new THREE.Geometry();
-        g.vertices = [
-            me.position,
-            me.destination
-        ];
-        var line = new THREE.Line(g, new THREE.LineBasicMaterial({ color : 0x0000ff }));
-        scene.add(line);
-        
-        if (intersectObjects.length > 0) {
-          console.log(intersectObjects)
-        }
-        */
         velocityVector.y = 0;
         me.barrier.setLinearVelocity(velocityVector);
-        //me.setLinearVelocity(velocityVector);
       }
       me.barrier.setAngularVelocity(zeroVector);
       me.barrier.setAngularFactor(zeroVector);
-      //me.setAngularVelocity(zeroVector);
-      //me.setAngularFactor(zeroVector);
     }
     x = 0;
     z = 0;
