@@ -341,11 +341,20 @@ function init() {
 }
 
 //minions
-minions = new Array(100);
-function spawn_minion(x, z, vx, vz, destX, destY) {
+minions = [];
+
+function spawn_minion(x, z, vx, vz, team_number) {
   if (minion_ready) {
   //if (name == 'minion') {
-        /*
+    var minionObj = {
+      health: 50,
+      range:  50,
+      damage: 5,
+      isChampion: false,
+      isAlive:    true
+    }
+
+    /*
     if (destY > 0) {
       //minions from the upper right corner! team A!
       //team A minions are all even number
@@ -356,27 +365,20 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
       element[minionCounts + ID] = minionObj;
     }*/
     var minion = THREE.SceneUtils.cloneObject(cache['minion']);
-    var minionObj = {
-      health: 50,
-      range:  5,
-      damage: 5,
-      isChampion: false,
-      isAlive:    true,
-      mesh: minion
-    }
     minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(5, 5, 10));
     minion.barrier.position = minion.position;
-    //location[minion.position.x + minion.position.y * MAP_WIDTH] = true;
     minion.position.set(x, 26, z);
     scene.add(minion);
     scene.add(minion.barrier);
     //TODO need a selector to take it off from the scene
-    element[minionCounts] = minionObj;
-    minionCounts ++;
-    minions.push(minionObj);
-    minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
-    minion.barrier.setAngularVelocity(zeroVector);
-    minion.barrier.setAngularFactor(zeroVector);
+    minion.health = 50;
+    minion.range = 50;
+    minion.damage = 5;
+    minion.team_number = team_number;
+    minion.vx = vx;
+    minion.vz = vz;
+    minions.push(minion);
+    // console.log(minion);
   //} else {
   //  console.error("No such entity: " + name);
   //}
@@ -385,8 +387,8 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
 }
 
 function spawn_minions() {
-  spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
-  spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
+  spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50, 0);
+  spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50, 1);
 }
 
 setInterval(function() {spawn_minions();}, 5000);
@@ -445,7 +447,35 @@ function Controls(camera) {
       case 39: /*right*/ right = false; break;
     }
   });
-  this.update_minions = function(delta) { }
+   this.update_minions = function(delta) {
+    //if (minions.length >= 1)
+  //    console.log(minions[0].barrier.position);
+//          console.log(locations[minions.position].barrier.getLinearVelocity);
+  //    console.log(minions);
+    for (var i = 0; i < minions.length; ++i) {
+      
+      minions[i].barrier.setLinearVelocity(new THREE.Vector3(minions[i].vx, 0, minions[i].vz));
+      minions[i].barrier.setAngularVelocity(zeroVector);
+      minions[i].barrier.setAngularFactor(zeroVector);
+    }
+
+    for (var i = 0; i < minions.length; ++i) {
+      if (minions[i].team_number == 1) continue;
+    
+      //var idx = getLocationIdx(minion.barrier.position.x, minion.barrier.position.z);
+      //console.log('minion: ' + idx);
+      //locations[idx] = minions[i];
+
+      for (var j = 0; j < minions.length; ++j) {
+        if (minions[j].team_number == 0) continue;
+        if (getDistance(minions[i].barrier.position.x, minions[i].barrier.position.z, minions[j].barrier.position.x, minions[j].barrier.position.z) < 10) {
+          minions[i].barrier.setLinearVelocity(zeroVector);
+
+        }
+      }
+    }
+  }
+
   this.update = function(delta){
     if (cache['hand'][0] < 5)
       z -= speed;
