@@ -31,7 +31,20 @@ stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0';
 stats.domElement.style.left = '200px';
 container.appendChild(stats.domElement);
-scene.add(new THREE.PointLight());
+var light1 = new THREE.PointLight();
+light1.position.set(0, 0, 0);
+scene.add(light1);
+//var light2 = new THREE.PointLight();
+//light2.position.set(MAP_WIDTH/2, 1000, MAP_HEIGHT/2);
+//scene.add(light2);
+var light3 = new THREE.PointLight();
+light3.position.set(-MAP_WIDTH/2, 1000, MAP_HEIGHT/2);
+scene.add(light3);
+var light4 = new THREE.PointLight();
+light4.position.set(MAP_WIDTH/2, 1000, -MAP_HEIGHT/2);
+scene.add(light4);
+
+
 
 //element is a list of all objects on the browser, the fist object is the hero
 var element = {},
@@ -46,6 +59,67 @@ function lockPointer() {
     hand.style.left = cache['hand'][1] + 'px';
   });
 }
+
+//tree filling polygons 
+var fillPoly = function (cords, func) {
+  //cords is the array
+  var i, j;
+  var nodeX = [];
+  if (typeof cords[0] == 'undefined') {
+    console.log('cords[0] undefined');
+    return
+  }
+  if (typeof cords[0][1] == 'undefined') {
+    console.log('cords[0][1] undefined');
+    return
+  }
+
+  var corners = cords.length;
+  var Zmin = cords[0][1],
+      Zmax = cords[0][1];
+  for (i = 1; i < corners; i++) {
+    if (cords[i][1] < Zmin) {
+      Zmin = cords[i][1];
+    }
+    if (cords[i][1] > Zmax) {
+      Zmax = cords[i][1];
+    }
+  }
+  console.log("get the min and max");
+  for (var pixelZ = Zmin+1; pixelZ < Zmax; pixelZ += 100) {
+    var nodes = 0, j = corners - 1;
+    for (i = 0; i < corners; i ++){  
+      if (((cords[i][1] < pixelZ) && (cords[j][1] >=pixelZ)) ||  ((cords[j][1]<pixelZ) && (cords[i][1]>=pixelZ))) {
+              nodeX[nodes++]= (cords[i][0]+(pixelZ-cords[i][1]) / (cords[j][1]-cords[i][1]) * (cords[j][0]-cords[i][0])); 
+      }
+      j = i;
+    }  
+    console.log("got the nodeX"); 
+    i=0;
+    while (i<nodes-1) {
+      if (nodeX[i]>nodeX[i+1]) {
+        swap=nodeX[i]; nodeX[i]=nodeX[i+1]; nodeX[i+1]=swap; if (i) i--; }
+      else {
+        i++; 
+      }
+    }
+    console.log("sorted");
+    for (i=0; i < nodes; i += 1) {
+      for (j=nodeX[i] + 1; j < nodeX[i+1]; j += 100) {
+        var tree = func();
+        //tree.position.set(j, pixelZ);    
+        
+        tree.position.set(5, 5);    
+        console.log("put the tree into position"+ j + " " + pixelZ); 
+        console.log(tree);
+        scene.add(tree);
+      }
+    }
+
+  }
+}
+
+
 
 
 window.oncontextmenu = function(event) {
@@ -85,9 +159,13 @@ function mousedown(event) {
     } else if (event.which == 3) { // right click
       //TODO 1. in range && enemy: attack 2. not inrange enemy: follow; 3. friend:
       //follow; 4. empty: go
-		if (intersections[0]) {
-			var endPt = intersections[0].point;
-			console.log(shortestPath({x: me.position.x, y: me.position.z}, {x: endPt.x, y: endPt.z}, polySet, function(solutionPts) {
+		   
+
+      if (intersections[0]) {
+        var endPt = intersections[0].point;
+			  //broadcast 
+        move(ID, curent, dest); 
+        console.log(shortestPath({x: me.position.x, y: me.position.z}, {x: endPt.x, y: endPt.z}, polySet, function(solutionPts) {
 				movementQueue = [];
 				if (solutionPts.length == 0) {
 					movementQueue.push(endPt);
@@ -103,6 +181,20 @@ function mousedown(event) {
     }
   }
 };
+
+function updateKill (id) {
+  element.id.alive = false;
+  //element.id.mesh.visible = false;
+  console.log(id + "is killed!!");
+  if (window.socket && window.socket.readyState === WebSocket.OPEN) {
+    socket.send(
+        JSON.stringify({
+        'type': 'kill'
+        , 'victim': playerId
+        , 'time': +new Date / 1000
+    }));
+  }  
+}
 
 function attack(letter, model, vector) {
   switch(letter) {
@@ -121,6 +213,8 @@ function attack(letter, model, vector) {
           }, 1000/60);
         }, 1000);
       }
+      if (location[vector.x + vector])
+        updateKill(location[vector.x + vector.z].id);
       break;
     case 'w':
       model.w.visible = !model.w.visible;
@@ -150,7 +244,8 @@ loader.load('karthus.js', function (geometry) {
     damage: 20,
     isChamp: true,
     isAlive: true,
-    isTeamA: true // TODO there should be ways for champions to know whether they are team a or team be from the server
+    isTeamA: true, // TODO there should be ways for champions to know whether they are team a or team be from the server
+    mesh:   cache['karthus']
   }
   element[ID] = champion;
   init();
@@ -250,14 +345,7 @@ minions = new Array(100);
 function spawn_minion(x, z, vx, vz, destX, destY) {
   if (minion_ready) {
   //if (name == 'minion') {
-    var minionObj = {
-      health: 50,
-      range:  5,
-      damage: 5,
-      isChampion: false,
-      isAlive:    true
-    }
-    /*
+        /*
     if (destY > 0) {
       //minions from the upper right corner! team A!
       //team A minions are all even number
@@ -268,12 +356,23 @@ function spawn_minion(x, z, vx, vz, destX, destY) {
       element[minionCounts + ID] = minionObj;
     }*/
     var minion = THREE.SceneUtils.cloneObject(cache['minion']);
+    var minionObj = {
+      health: 50,
+      range:  5,
+      damage: 5,
+      isChampion: false,
+      isAlive:    true,
+      mesh: minion
+    }
     minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(5, 5, 10));
     minion.barrier.position = minion.position;
+    //location[minion.position.x + minion.position.y * MAP_WIDTH] = true;
     minion.position.set(x, 26, z);
     scene.add(minion);
     scene.add(minion.barrier);
     //TODO need a selector to take it off from the scene
+    element[minionCounts] = minionObj;
+    minionCounts ++;
     minions.push(minionObj);
     minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
     minion.barrier.setAngularVelocity(zeroVector);
@@ -413,7 +512,8 @@ var connect = function() {
                 damage: 20,
                 isChamp: true,
                 isAlive: true,
-                isTeamA:    true // TODO there should be ways for champions to know whether they are team a or team be from the server
+                isTeamA:    true, // TODO there should be ways for champions to know whether they are team a or team be from the server
+                mesh: model
               }
 
               element[msg.id] = champion
