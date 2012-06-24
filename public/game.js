@@ -1,16 +1,16 @@
-var MAP_WIDTH = 1000;
-var MAP_HEIGHT = 1000;
+var MAP_WIDTH = 2000;
+var MAP_HEIGHT = 2000;
 var WALL_HEIGHT = 200;
 var cache = {};
-var zeroV = new THREE.Vector3(0, 0, 0);
+var zeroVector = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
 var height = window.innerHeight - 4;
 cache['mouse'] = [width/2, height/2];
 var container = document.getElementById('container');
 var scene = new Physijs.Scene();
-scene.setGravity(zeroV);
+scene.setGravity(zeroVector);
 var camera = new THREE.PerspectiveCamera(40, width / height, 1, 100000);
-camera.position.set(0, 500, 0);
+camera.position.set(0, 500, 200);
 camera.rotation.x = -Math.PI/3;
 scene.add(camera);
 var renderer = new THREE.WebGLRenderer();
@@ -374,11 +374,6 @@ me.position.set(0, 35, -200);
 scene.add(me);
 */
 
-var box = new Physijs.BoxMesh(new THREE.CubeGeometry(20, 100, 20));
-box.position.set(0, 50, -250);
-box.mass = 0;
-scene.add(box);
-
 requestAnimationFrame(render);
 
 
@@ -388,7 +383,7 @@ loader.load('karthus.js', function (geometry) {
   var material = geometry.materials[0];
   cache['karthus'] = new THREE.Mesh(geometry, material);
   cache['karthus'].flipSided = true;
-  cache['karthus'].rotation.x = Math.PI/2;
+  cache['karthus'].rotation.x = Math.PI / 2;
   cache['karthus'].scale.set(.3, .3, .3);
   init();
 });
@@ -482,9 +477,9 @@ function Controls(camera) {
       x += speed;
 
     if (x)
-      camera.position.x = THREE.Math.clamp(camera.position.x + x, -4800, 4800);
+      camera.position.x = THREE.Math.clamp(camera.position.x + x, -MAP_WIDTH + 200, MAP_WIDTH - 200);
     if (z)
-      camera.position.z = THREE.Math.clamp(camera.position.z + z, -4450, 5000);
+      camera.position.z = THREE.Math.clamp(camera.position.z + z, -MAP_HEIGHT + 550, MAP_HEIGHT);
 
     me.rotation.z += 0.03;
 
@@ -493,7 +488,7 @@ function Controls(camera) {
         var item = directionsQueue.dequeue();
       }
       if (directionsQueue.getLength() <= 1 && distanceFrom(me.position, directionsQueue.peek()) < 1) {
-        me.barrier.setLinearVelocity(zeroV);
+        me.barrier.setLinearVelocity(zeroVector);
       } else {
         var newDest = directionsQueue.peek();
         var newDestVector = new THREE.Vector3(newDest.x, 0, newDest.z);
@@ -520,10 +515,10 @@ function Controls(camera) {
         me.barrier.setLinearVelocity(velocityVector);
         //me.setLinearVelocity(velocityVector);
       }
-      me.barrier.setAngularVelocity(zeroV);
-      me.barrier.setAngularFactor(zeroV);
-      //me.setAngularVelocity(zeroV);
-      //me.setAngularFactor(zeroV);
+      me.barrier.setAngularVelocity(zeroVector);
+      me.barrier.setAngularFactor(zeroVector);
+      //me.setAngularVelocity(zeroVector);
+      //me.setAngularFactor(zeroVector);
     }
     x = 0;
     z = 0;
