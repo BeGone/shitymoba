@@ -1,3 +1,6 @@
+var MAP_WIDTH = 10000;
+var MAP_HEIGHT = 10000;
+var WALL_HEIGHT = 200;
 var cache = {};
 var zeroV = new THREE.Vector3(0, 0, 0);
 var width = window.innerWidth;
@@ -355,13 +358,13 @@ function onclick(event) {
     }
     directionsQueue.enqueue(me.destination);  
   }
-});
+};
 
 var map_texture = new THREE.ImageUtils.loadTexture('map_texture.jpg');
 map_texture.wrapT = map_texture.wrapS = THREE.RepeatWrapping;
 map_texture.repeat.set(100, 100);
 map_material = new THREE.MeshBasicMaterial({ map: map_texture });
-var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(10000, 10000), map_material,  0);
+var map = new Physijs.BoxMesh(new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT), map_material,  0);
 scene.add(map);
 
 cylinder_material = new THREE.MeshBasicMaterial({ color: 0x000000 })
@@ -390,6 +393,34 @@ loader.load('karthus.js', function (geometry) {
   init();
 });
 
+var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
+wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping; 
+wall_texture.repeat.set(10, 10);
+var wall_material = new THREE.MeshBasicMaterial({ color : "0xffffff" });
+
+// create walls
+getDistance = function(x1, z1, x2, z2) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(z1 - z2, 2));
+};
+
+addWall = function(x1, z1, x2, z2) { 
+  var wall_geometry = new THREE.PlaneGeometry(getDistance(x1, z1, x2, z2), WALL_HEIGHT);
+  var wall_mesh = new Physijs.BoxMesh(wall_geometry, wall_material, 0);
+  wall_mesh.name = 'wall';
+  wall_mesh.position.set((x1 + x2) / 2, 0, (z1 + z2) / 2);
+  wall_mesh.rotation.z = Math.atan((z2 - z1) / (x2 - x1));
+  wall_mesh.rotation.x = Math.PI / 2;
+
+  scene.add(wall_mesh);
+};
+
+var wall_coords = [
+  [-MAP_WIDTH / 2, MAP_HEIGHT / 4, -MAP_WIDTH / 3, MAP_HEIGHT / 4],
+  [-MAP_WIDTH / 4, MAP_HEIGHT / 6, -MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12],
+  [-MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12, -MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12],
+  [-MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12, -MAP_WIDTH / 12, 0],
+  [-MAP_WIDTH / 12, 0,  -MAP_WIDTH / 4, MAP_HEIGHT / 6]
+];
 
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
@@ -398,6 +429,14 @@ function init() {
   me.position.set(0, 26, -200);
   scene.add(me);
   scene.add(me.barrier);
+
+  for (var i = 0; i < wall_coords.length; ++i) {
+    addWall(wall_coords[i][0], wall_coords[i][1], wall_coords[i][2], wall_coords[i][3]);
+    addWall(wall_coords[i][1], wall_coords[i][0], wall_coords[i][3], wall_coords[i][2]);
+    addWall(-wall_coords[i][1], -wall_coords[i][0], -wall_coords[i][3], -wall_coords[i][2]);
+    addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
+  }  
+  
 
   requestAnimationFrame(render);
 }
