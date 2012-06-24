@@ -18,17 +18,25 @@ var pointInPolygonSet = function ( pt, polySet ) {
 	return false;
 };
 
-var lineIntersects = function ( start1, end1, start2, end2) {
-	var denom = ((end1.x - start1.x) * (end2.y - start2.y)) - ((end1.y - start1.y) * (end2.x - start2.x));
-	if (denom == 0) return false;
-    var numer = ((start1.y - start2.y) * (end2.x - start2.x)) - ((start1.x - start2.x) * (end2.y - start2.y));
-	var r = numer / denom;
-    var numer2 = ((start1.Y - start2.Y) * (end1.X - start1.X)) - ((start1.X - start2.X) * (end1.Y - start1.Y));
-    var s = numer2 / denom;
+var lineIntersects = function(a1, a2, b1, b2) {
+    var result;
+    
+    var ua_t = (b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x);
+    var ub_t = (a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x);
+    var u_b  = (b2.y - b1.y) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.y - a1.y);
 
-    if ((r < 0 || r > 1) || (s < 0 || s > 1)) return false;
+    if ( u_b != 0 ) {
+        var ua = ua_t / u_b;
+        var ub = ub_t / u_b;
 
-    return true;
+        if ( 0 <= ua && ua <= 1 && 0 <= ub && ub <= 1 ) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
 
 // This function checks if a line lies in a restricted access polygon
@@ -106,7 +114,7 @@ var shortestPath = function(pt1, pt2, polySet, solutionCallback) {
 		bestDist = INF;
 		for (i = 0; i < treeCount; i++) {
 			for (j = treeCount; j < pointList.length; j++) {
-				if (lineInPolygonSet(pointList[i], pointList[j], polySet)) {
+				if (!lineInPolygonSet(pointList[i], pointList[j], polySet)) {
 					newDist = pointList[i].totalDist + calcDist(pointList[i].x, pointList[i].y, pointList[j].x, pointList[j].y);
 					if (newDist < bestDist) {
 						bestDist = newDist;
