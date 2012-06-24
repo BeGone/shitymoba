@@ -408,6 +408,21 @@ loader.load('karthus.js', function (geometry) {
   init();
 });
 
+minion_ready = false;
+
+loader.load('Blue_Minion_Wizard.js', function (geometry) {
+  var material = geometry.materials[0];
+  cache['minion'] = new THREE.Mesh(geometry, material);
+  cache['minion'].flipSided = true;
+  cache['minion'].rotation.x = Math.PI / 2;
+  cache['minion'].scale.set(.2, .2, .2);
+  minion_ready = true;
+  
+  
+});
+
+
+
 var wall_texture = new THREE.ImageUtils.loadTexture("map_texture.jpg");
 wall_texture.wrapT = wall_texture.wrapS = THREE.RepeatWrapping;
 wall_texture.repeat.set(10, 10);
@@ -430,13 +445,20 @@ addWall = function(x1, z1, x2, z2) {
 };
 
 var wall_coords = [
-    [-MAP_WIDTH / 2, MAP_HEIGHT / 2, MAP_WIDTH / 2, MAP_HEIGHT / 2],
+  [-MAP_WIDTH / 2, MAP_HEIGHT / 2, MAP_WIDTH / 2, MAP_HEIGHT / 2],
   [-MAP_WIDTH * 5 / 12, MAP_HEIGHT / 4, -MAP_WIDTH / 3, MAP_HEIGHT / 4],
   [-MAP_WIDTH / 4, MAP_HEIGHT / 6, -MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12],
   [-MAP_WIDTH * 5 / 12, MAP_HEIGHT / 12, -MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12],
   [-MAP_WIDTH * 5 / 12, -MAP_HEIGHT * 4 / 12, -MAP_WIDTH / 12, 0],
   [-MAP_WIDTH / 12, 0,  -MAP_WIDTH / 4, MAP_HEIGHT / 6]
 ];
+
+for (var i = 0; i < wall_coords.length; ++i) {
+  addWall(wall_coords[i][0], wall_coords[i][1], wall_coords[i][2], wall_coords[i][3]);
+  addWall(wall_coords[i][1], wall_coords[i][0], wall_coords[i][3], wall_coords[i][2]);
+  addWall(-wall_coords[i][1], -wall_coords[i][0], -wall_coords[i][3], -wall_coords[i][2]);
+  addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
+}
 
 function init() {
   me = THREE.SceneUtils.cloneObject(cache['karthus']);
@@ -445,18 +467,42 @@ function init() {
   me.position.set(0, 26, 0);
   scene.add(me);
   scene.add(me.barrier);
+  requestAnimationFrame(render);
+}
 
-  for (var i = 0; i < wall_coords.length; ++i) {
-    addWall(wall_coords[i][0], wall_coords[i][1], wall_coords[i][2], wall_coords[i][3]);
-    addWall(wall_coords[i][1], wall_coords[i][0], wall_coords[i][3], wall_coords[i][2]);
-    addWall(-wall_coords[i][1], -wall_coords[i][0], -wall_coords[i][3], -wall_coords[i][2]);
-    addWall(-wall_coords[i][0], -wall_coords[i][1], -wall_coords[i][2], -wall_coords[i][3]);
+//minions
+minions = new Array(100);
+function spawn_minion(x, z, vx, vz, destX, destY) {
+  if (minion_ready) {
+  //if (name == 'minion') {
+    var minion = THREE.SceneUtils.cloneObject(cache['minion']);
+    minion.barrier = new Physijs.CylinderMesh(new THREE.CylinderGeometry(5, 5, 10));
+    minion.barrier.position = minion.position;
+    minion.position.set(x, 26, z);
+    scene.add(minion);
+    scene.add(minion.barrier);
+    minions.push(minion);
+    minion.barrier.setLinearVelocity(new THREE.Vector3(vx, 0, vz));
+    minion.barrier.setAngularVelocity(zeroVector);
+    minion.barrier.setAngularFactor(zeroVector);
+  
+  //} else {
+  //  console.error("No such entity: " + name);
+  //}
+
   }
+}
 
+function spawn_minions() {
+  spawn_minion(-MAP_WIDTH / 2 + 50, MAP_WIDTH / 2 - 50, 50, -50);
+  spawn_minion(MAP_WIDTH / 2 - 50, -MAP_WIDTH / 2 + 50, -50, 50);
   setInterval(function(){
     requestAnimationFrame(render);
   }, 1000/60);
 }
+
+setInterval(function() {spawn_minions();}, 3000); 
+
 
 function render() {
   scene.simulate(undefined, 1);
@@ -466,6 +512,7 @@ function render() {
 }
 
 function Controls(camera) {
+  
   this.camera = camera;
   var up, down, left, right, x, z, pointerX, pointerY;
   var speed = 10;
@@ -511,7 +558,11 @@ function Controls(camera) {
       case 39: /*right*/ right = false; break;
     }
   });
-
+  this.update_minions = function(delta) {
+    /*for (int i = 0; i < minions.length; ++i) {
+      
+    }*/
+  }
   this.update = function(delta){
 /*
     if (up && !down || cache['mouse'][1] < 30)
@@ -547,5 +598,7 @@ function Controls(camera) {
     }
     x = 0;
     z = 0;
+    this.update_minions(delta);
+    
   }
 }
